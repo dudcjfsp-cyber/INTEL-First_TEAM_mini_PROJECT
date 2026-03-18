@@ -1,0 +1,865 @@
+﻿python : Traceback (mos
+t recent call last):
+위치 줄:1 문자:1
++ python src/inference.
+py --test 2>&1 | Out-Fi
+le -Encoding utf8 tmp_e
+rr ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Traceback (mo   
+ st recent call las    
+t)::String) [], Re    m
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  File "C:\Users\User\D
+esktop\재활용분류 팀프로젝트\src\
+inference.py", line 182
+, in <module>
+
+============================================================
+  재활용 분류기 - 듀얼 헤드 엔진 작동
+  디바이스: cpu
+============================================================
+    model = load_model(
+config, device)
+            ^^^^^^^^^^^
+^^^^^^^^^^^^^^^
+  File "C:\Users\User\D
+esktop\재활용분류 팀프로젝트\src\
+inference.py", line 71,
+ in load_model
+    model.load_state_di
+ct(state_dict)
+  File "C:\Users\User\A
+ppData\Local\Programs\P
+ython\Python311\Lib\sit
+e-packages\torch\nn\mod
+ules\module.py", line 2
+635, in load_state_dict
+    raise RuntimeError(
+RuntimeError: Error(s) 
+in loading state_dict f
+or DualHeadMobileNetV3:
+	Missing key(s) in stat
+e_dict: "backbone.conv_
+stem.weight", "backbone
+.bn1.weight", "backbone
+.bn1.bias", "backbone.b
+n1.running_mean", "back
+bone.bn1.running_var", 
+"backbone.blocks.0.0.co
+nv_dw.weight", "backbon
+e.blocks.0.0.bn1.weight
+", "backbone.blocks.0.0
+.bn1.bias", "backbone.b
+locks.0.0.bn1.running_m
+ean", "backbone.blocks.
+0.0.bn1.running_var", "
+backbone.blocks.0.0.se.
+conv_reduce.weight", "b
+ackbone.blocks.0.0.se.c
+onv_reduce.bias", "back
+bone.blocks.0.0.se.conv
+_expand.weight", "backb
+one.blocks.0.0.se.conv_
+expand.bias", "backbone
+.blocks.0.0.conv_pw.wei
+ght", "backbone.blocks.
+0.0.bn2.weight", "backb
+one.blocks.0.0.bn2.bias
+", "backbone.blocks.0.0
+.bn2.running_mean", "ba
+ckbone.blocks.0.0.bn2.r
+unning_var", "backbone.
+blocks.1.0.conv_pw.weig
+ht", "backbone.blocks.1
+.0.bn1.weight", "backbo
+ne.blocks.1.0.bn1.bias"
+, "backbone.blocks.1.0.
+bn1.running_mean", "bac
+kbone.blocks.1.0.bn1.ru
+nning_var", "backbone.b
+locks.1.0.conv_dw.weigh
+t", "backbone.blocks.1.
+0.bn2.weight", "backbon
+e.blocks.1.0.bn2.bias",
+ "backbone.blocks.1.0.b
+n2.running_mean", "back
+bone.blocks.1.0.bn2.run
+ning_var", "backbone.bl
+ocks.1.0.conv_pwl.weigh
+t", "backbone.blocks.1.
+0.bn3.weight", "backbon
+e.blocks.1.0.bn3.bias",
+ "backbone.blocks.1.0.b
+n3.running_mean", "back
+bone.blocks.1.0.bn3.run
+ning_var", "backbone.bl
+ocks.1.1.conv_pw.weight
+", "backbone.blocks.1.1
+.bn1.weight", "backbone
+.blocks.1.1.bn1.bias", 
+"backbone.blocks.1.1.bn
+1.running_mean", "backb
+one.blocks.1.1.bn1.runn
+ing_var", "backbone.blo
+cks.1.1.conv_dw.weight"
+, "backbone.blocks.1.1.
+bn2.weight", "backbone.
+blocks.1.1.bn2.bias", "
+backbone.blocks.1.1.bn2
+.running_mean", "backbo
+ne.blocks.1.1.bn2.runni
+ng_var", "backbone.bloc
+ks.1.1.conv_pwl.weight"
+, "backbone.blocks.1.1.
+bn3.weight", "backbone.
+blocks.1.1.bn3.bias", "
+backbone.blocks.1.1.bn3
+.running_mean", "backbo
+ne.blocks.1.1.bn3.runni
+ng_var", "backbone.bloc
+ks.2.0.conv_pw.weight",
+ "backbone.blocks.2.0.b
+n1.weight", "backbone.b
+locks.2.0.bn1.bias", "b
+ackbone.blocks.2.0.bn1.
+running_mean", "backbon
+e.blocks.2.0.bn1.runnin
+g_var", "backbone.block
+s.2.0.conv_dw.weight", 
+"backbone.blocks.2.0.bn
+2.weight", "backbone.bl
+ocks.2.0.bn2.bias", "ba
+ckbone.blocks.2.0.bn2.r
+unning_mean", "backbone
+.blocks.2.0.bn2.running
+_var", "backbone.blocks
+.2.0.se.conv_reduce.wei
+ght", "backbone.blocks.
+2.0.se.conv_reduce.bias
+", "backbone.blocks.2.0
+.se.conv_expand.weight"
+, "backbone.blocks.2.0.
+se.conv_expand.bias", "
+backbone.blocks.2.0.con
+v_pwl.weight", "backbon
+e.blocks.2.0.bn3.weight
+", "backbone.blocks.2.0
+.bn3.bias", "backbone.b
+locks.2.0.bn3.running_m
+ean", "backbone.blocks.
+2.0.bn3.running_var", "
+backbone.blocks.2.1.con
+v_pw.weight", "backbone
+.blocks.2.1.bn1.weight"
+, "backbone.blocks.2.1.
+bn1.bias", "backbone.bl
+ocks.2.1.bn1.running_me
+an", "backbone.blocks.2
+.1.bn1.running_var", "b
+ackbone.blocks.2.1.conv
+_dw.weight", "backbone.
+blocks.2.1.bn2.weight",
+ "backbone.blocks.2.1.b
+n2.bias", "backbone.blo
+cks.2.1.bn2.running_mea
+n", "backbone.blocks.2.
+1.bn2.running_var", "ba
+ckbone.blocks.2.1.se.co
+nv_reduce.weight", "bac
+kbone.blocks.2.1.se.con
+v_reduce.bias", "backbo
+ne.blocks.2.1.se.conv_e
+xpand.weight", "backbon
+e.blocks.2.1.se.conv_ex
+pand.bias", "backbone.b
+locks.2.1.conv_pwl.weig
+ht", "backbone.blocks.2
+.1.bn3.weight", "backbo
+ne.blocks.2.1.bn3.bias"
+, "backbone.blocks.2.1.
+bn3.running_mean", "bac
+kbone.blocks.2.1.bn3.ru
+nning_var", "backbone.b
+locks.2.2.conv_pw.weigh
+t", "backbone.blocks.2.
+2.bn1.weight", "backbon
+e.blocks.2.2.bn1.bias",
+ "backbone.blocks.2.2.b
+n1.running_mean", "back
+bone.blocks.2.2.bn1.run
+ning_var", "backbone.bl
+ocks.2.2.conv_dw.weight
+", "backbone.blocks.2.2
+.bn2.weight", "backbone
+.blocks.2.2.bn2.bias", 
+"backbone.blocks.2.2.bn
+2.running_mean", "backb
+one.blocks.2.2.bn2.runn
+ing_var", "backbone.blo
+cks.2.2.se.conv_reduce.
+weight", "backbone.bloc
+ks.2.2.se.conv_reduce.b
+ias", "backbone.blocks.
+2.2.se.conv_expand.weig
+ht", "backbone.blocks.2
+.2.se.conv_expand.bias"
+, "backbone.blocks.2.2.
+conv_pwl.weight", "back
+bone.blocks.2.2.bn3.wei
+ght", "backbone.blocks.
+2.2.bn3.bias", "backbon
+e.blocks.2.2.bn3.runnin
+g_mean", "backbone.bloc
+ks.2.2.bn3.running_var"
+, "backbone.blocks.3.0.
+conv_pw.weight", "backb
+one.blocks.3.0.bn1.weig
+ht", "backbone.blocks.3
+.0.bn1.bias", "backbone
+.blocks.3.0.bn1.running
+_mean", "backbone.block
+s.3.0.bn1.running_var",
+ "backbone.blocks.3.0.c
+onv_dw.weight", "backbo
+ne.blocks.3.0.bn2.weigh
+t", "backbone.blocks.3.
+0.bn2.bias", "backbone.
+blocks.3.0.bn2.running_
+mean", "backbone.blocks
+.3.0.bn2.running_var", 
+"backbone.blocks.3.0.se
+.conv_reduce.weight", "
+backbone.blocks.3.0.se.
+conv_reduce.bias", "bac
+kbone.blocks.3.0.se.con
+v_expand.weight", "back
+bone.blocks.3.0.se.conv
+_expand.bias", "backbon
+e.blocks.3.0.conv_pwl.w
+eight", "backbone.block
+s.3.0.bn3.weight", "bac
+kbone.blocks.3.0.bn3.bi
+as", "backbone.blocks.3
+.0.bn3.running_mean", "
+backbone.blocks.3.0.bn3
+.running_var", "backbon
+e.blocks.3.1.conv_pw.we
+ight", "backbone.blocks
+.3.1.bn1.weight", "back
+bone.blocks.3.1.bn1.bia
+s", "backbone.blocks.3.
+1.bn1.running_mean", "b
+ackbone.blocks.3.1.bn1.
+running_var", "backbone
+.blocks.3.1.conv_dw.wei
+ght", "backbone.blocks.
+3.1.bn2.weight", "backb
+one.blocks.3.1.bn2.bias
+", "backbone.blocks.3.1
+.bn2.running_mean", "ba
+ckbone.blocks.3.1.bn2.r
+unning_var", "backbone.
+blocks.3.1.se.conv_redu
+ce.weight", "backbone.b
+locks.3.1.se.conv_reduc
+e.bias", "backbone.bloc
+ks.3.1.se.conv_expand.w
+eight", "backbone.block
+s.3.1.se.conv_expand.bi
+as", "backbone.blocks.3
+.1.conv_pwl.weight", "b
+ackbone.blocks.3.1.bn3.
+weight", "backbone.bloc
+ks.3.1.bn3.bias", "back
+bone.blocks.3.1.bn3.run
+ning_mean", "backbone.b
+locks.3.1.bn3.running_v
+ar", "backbone.blocks.4
+.0.conv_pw.weight", "ba
+ckbone.blocks.4.0.bn1.w
+eight", "backbone.block
+s.4.0.bn1.bias", "backb
+one.blocks.4.0.bn1.runn
+ing_mean", "backbone.bl
+ocks.4.0.bn1.running_va
+r", "backbone.blocks.4.
+0.conv_dw.weight", "bac
+kbone.blocks.4.0.bn2.we
+ight", "backbone.blocks
+.4.0.bn2.bias", "backbo
+ne.blocks.4.0.bn2.runni
+ng_mean", "backbone.blo
+cks.4.0.bn2.running_var
+", "backbone.blocks.4.0
+.se.conv_reduce.weight"
+, "backbone.blocks.4.0.
+se.conv_reduce.bias", "
+backbone.blocks.4.0.se.
+conv_expand.weight", "b
+ackbone.blocks.4.0.se.c
+onv_expand.bias", "back
+bone.blocks.4.0.conv_pw
+l.weight", "backbone.bl
+ocks.4.0.bn3.weight", "
+backbone.blocks.4.0.bn3
+.bias", "backbone.block
+s.4.0.bn3.running_mean"
+, "backbone.blocks.4.0.
+bn3.running_var", "back
+bone.blocks.4.1.conv_pw
+.weight", "backbone.blo
+cks.4.1.bn1.weight", "b
+ackbone.blocks.4.1.bn1.
+bias", "backbone.blocks
+.4.1.bn1.running_mean",
+ "backbone.blocks.4.1.b
+n1.running_var", "backb
+one.blocks.4.1.conv_dw.
+weight", "backbone.bloc
+ks.4.1.bn2.weight", "ba
+ckbone.blocks.4.1.bn2.b
+ias", "backbone.blocks.
+4.1.bn2.running_mean", 
+"backbone.blocks.4.1.bn
+2.running_var", "backbo
+ne.blocks.4.1.se.conv_r
+educe.weight", "backbon
+e.blocks.4.1.se.conv_re
+duce.bias", "backbone.b
+locks.4.1.se.conv_expan
+d.weight", "backbone.bl
+ocks.4.1.se.conv_expand
+.bias", "backbone.block
+s.4.1.conv_pwl.weight",
+ "backbone.blocks.4.1.b
+n3.weight", "backbone.b
+locks.4.1.bn3.bias", "b
+ackbone.blocks.4.1.bn3.
+running_mean", "backbon
+e.blocks.4.1.bn3.runnin
+g_var", "backbone.block
+s.4.2.conv_pw.weight", 
+"backbone.blocks.4.2.bn
+1.weight", "backbone.bl
+ocks.4.2.bn1.bias", "ba
+ckbone.blocks.4.2.bn1.r
+unning_mean", "backbone
+.blocks.4.2.bn1.running
+_var", "backbone.blocks
+.4.2.conv_dw.weight", "
+backbone.blocks.4.2.bn2
+.weight", "backbone.blo
+cks.4.2.bn2.bias", "bac
+kbone.blocks.4.2.bn2.ru
+nning_mean", "backbone.
+blocks.4.2.bn2.running_
+var", "backbone.blocks.
+4.2.se.conv_reduce.weig
+ht", "backbone.blocks.4
+.2.se.conv_reduce.bias"
+, "backbone.blocks.4.2.
+se.conv_expand.weight",
+ "backbone.blocks.4.2.s
+e.conv_expand.bias", "b
+ackbone.blocks.4.2.conv
+_pwl.weight", "backbone
+.blocks.4.2.bn3.weight"
+, "backbone.blocks.4.2.
+bn3.bias", "backbone.bl
+ocks.4.2.bn3.running_me
+an", "backbone.blocks.4
+.2.bn3.running_var", "b
+ackbone.blocks.5.0.conv
+.weight", "backbone.blo
+cks.5.0.bn1.weight", "b
+ackbone.blocks.5.0.bn1.
+bias", "backbone.blocks
+.5.0.bn1.running_mean",
+ "backbone.blocks.5.0.b
+n1.running_var", "backb
+one.conv_head.weight", 
+"backbone.conv_head.bia
+s", "material_head.weig
+ht", "material_head.bia
+s", "contamination_head
+.weight", "contaminatio
+n_head.bias". 
+	Unexpected key(s) in s
+tate_dict: "conv_stem.w
+eight", "bn1.weight", "
+bn1.bias", "bn1.running
+_mean", "bn1.running_va
+r", "bn1.num_batches_tr
+acked", "blocks.0.0.con
+v_dw.weight", "blocks.0
+.0.bn1.weight", "blocks
+.0.0.bn1.bias", "blocks
+.0.0.bn1.running_mean",
+ "blocks.0.0.bn1.runnin
+g_var", "blocks.0.0.bn1
+.num_batches_tracked", 
+"blocks.0.0.se.conv_red
+uce.weight", "blocks.0.
+0.se.conv_reduce.bias",
+ "blocks.0.0.se.conv_ex
+pand.weight", "blocks.0
+.0.se.conv_expand.bias"
+, "blocks.0.0.conv_pw.w
+eight", "blocks.0.0.bn2
+.weight", "blocks.0.0.b
+n2.bias", "blocks.0.0.b
+n2.running_mean", "bloc
+ks.0.0.bn2.running_var"
+, "blocks.0.0.bn2.num_b
+atches_tracked", "block
+s.1.0.conv_pw.weight", 
+"blocks.1.0.bn1.weight"
+, "blocks.1.0.bn1.bias"
+, "blocks.1.0.bn1.runni
+ng_mean", "blocks.1.0.b
+n1.running_var", "block
+s.1.0.bn1.num_batches_t
+racked", "blocks.1.0.co
+nv_dw.weight", "blocks.
+1.0.bn2.weight", "block
+s.1.0.bn2.bias", "block
+s.1.0.bn2.running_mean"
+, "blocks.1.0.bn2.runni
+ng_var", "blocks.1.0.bn
+2.num_batches_tracked",
+ "blocks.1.0.se.conv_re
+duce.weight", "blocks.1
+.0.se.conv_reduce.bias"
+, "blocks.1.0.se.conv_e
+xpand.weight", "blocks.
+1.0.se.conv_expand.bias
+", "blocks.1.0.conv_pwl
+.weight", "blocks.1.0.b
+n3.weight", "blocks.1.0
+.bn3.bias", "blocks.1.0
+.bn3.running_mean", "bl
+ocks.1.0.bn3.running_va
+r", "blocks.1.0.bn3.num
+_batches_tracked", "blo
+cks.1.1.conv_pw.weight"
+, "blocks.1.1.bn1.weigh
+t", "blocks.1.1.bn1.bia
+s", "blocks.1.1.bn1.run
+ning_mean", "blocks.1.1
+.bn1.running_var", "blo
+cks.1.1.bn1.num_batches
+_tracked", "blocks.1.1.
+conv_dw.weight", "block
+s.1.1.bn2.weight", "blo
+cks.1.1.bn2.bias", "blo
+cks.1.1.bn2.running_mea
+n", "blocks.1.1.bn2.run
+ning_var", "blocks.1.1.
+bn2.num_batches_tracked
+", "blocks.1.1.se.conv_
+reduce.weight", "blocks
+.1.1.se.conv_reduce.bia
+s", "blocks.1.1.se.conv
+_expand.weight", "block
+s.1.1.se.conv_expand.bi
+as", "blocks.1.1.conv_p
+wl.weight", "blocks.1.1
+.bn3.weight", "blocks.1
+.1.bn3.bias", "blocks.1
+.1.bn3.running_mean", "
+blocks.1.1.bn3.running_
+var", "blocks.1.1.bn3.n
+um_batches_tracked", "b
+locks.2.0.conv_pw.weigh
+t", "blocks.2.0.bn1.wei
+ght", "blocks.2.0.bn1.b
+ias", "blocks.2.0.bn1.r
+unning_mean", "blocks.2
+.0.bn1.running_var", "b
+locks.2.0.bn1.num_batch
+es_tracked", "blocks.2.
+0.conv_dw.weight", "blo
+cks.2.0.bn2.weight", "b
+locks.2.0.bn2.bias", "b
+locks.2.0.bn2.running_m
+ean", "blocks.2.0.bn2.r
+unning_var", "blocks.2.
+0.bn2.num_batches_track
+ed", "blocks.2.0.se.con
+v_reduce.weight", "bloc
+ks.2.0.se.conv_reduce.b
+ias", "blocks.2.0.se.co
+nv_expand.weight", "blo
+cks.2.0.se.conv_expand.
+bias", "blocks.2.0.conv
+_pwl.weight", "blocks.2
+.0.bn3.weight", "blocks
+.2.0.bn3.bias", "blocks
+.2.0.bn3.running_mean",
+ "blocks.2.0.bn3.runnin
+g_var", "blocks.2.0.bn3
+.num_batches_tracked", 
+"blocks.2.1.conv_pw.wei
+ght", "blocks.2.1.bn1.w
+eight", "blocks.2.1.bn1
+.bias", "blocks.2.1.bn1
+.running_mean", "blocks
+.2.1.bn1.running_var", 
+"blocks.2.1.bn1.num_bat
+ches_tracked", "blocks.
+2.1.conv_dw.weight", "b
+locks.2.1.bn2.weight", 
+"blocks.2.1.bn2.bias", 
+"blocks.2.1.bn2.running
+_mean", "blocks.2.1.bn2
+.running_var", "blocks.
+2.1.bn2.num_batches_tra
+cked", "blocks.2.1.se.c
+onv_reduce.weight", "bl
+ocks.2.1.se.conv_reduce
+.bias", "blocks.2.1.se.
+conv_expand.weight", "b
+locks.2.1.se.conv_expan
+d.bias", "blocks.2.1.co
+nv_pwl.weight", "blocks
+.2.1.bn3.weight", "bloc
+ks.2.1.bn3.bias", "bloc
+ks.2.1.bn3.running_mean
+", "blocks.2.1.bn3.runn
+ing_var", "blocks.2.1.b
+n3.num_batches_tracked"
+, "blocks.3.0.conv_pw.w
+eight", "blocks.3.0.bn1
+.weight", "blocks.3.0.b
+n1.bias", "blocks.3.0.b
+n1.running_mean", "bloc
+ks.3.0.bn1.running_var"
+, "blocks.3.0.bn1.num_b
+atches_tracked", "block
+s.3.0.conv_dw.weight", 
+"blocks.3.0.bn2.weight"
+, "blocks.3.0.bn2.bias"
+, "blocks.3.0.bn2.runni
+ng_mean", "blocks.3.0.b
+n2.running_var", "block
+s.3.0.bn2.num_batches_t
+racked", "blocks.3.0.se
+.conv_reduce.weight", "
+blocks.3.0.se.conv_redu
+ce.bias", "blocks.3.0.s
+e.conv_expand.weight", 
+"blocks.3.0.se.conv_exp
+and.bias", "blocks.3.0.
+conv_pwl.weight", "bloc
+ks.3.0.bn3.weight", "bl
+ocks.3.0.bn3.bias", "bl
+ocks.3.0.bn3.running_me
+an", "blocks.3.0.bn3.ru
+nning_var", "blocks.3.0
+.bn3.num_batches_tracke
+d", "blocks.3.1.conv_pw
+.weight", "blocks.3.1.b
+n1.weight", "blocks.3.1
+.bn1.bias", "blocks.3.1
+.bn1.running_mean", "bl
+ocks.3.1.bn1.running_va
+r", "blocks.3.1.bn1.num
+_batches_tracked", "blo
+cks.3.1.conv_dw.weight"
+, "blocks.3.1.bn2.weigh
+t", "blocks.3.1.bn2.bia
+s", "blocks.3.1.bn2.run
+ning_mean", "blocks.3.1
+.bn2.running_var", "blo
+cks.3.1.bn2.num_batches
+_tracked", "blocks.3.1.
+se.conv_reduce.weight",
+ "blocks.3.1.se.conv_re
+duce.bias", "blocks.3.1
+.se.conv_expand.weight"
+, "blocks.3.1.se.conv_e
+xpand.bias", "blocks.3.
+1.conv_pwl.weight", "bl
+ocks.3.1.bn3.weight", "
+blocks.3.1.bn3.bias", "
+blocks.3.1.bn3.running_
+mean", "blocks.3.1.bn3.
+running_var", "blocks.3
+.1.bn3.num_batches_trac
+ked", "blocks.3.2.conv_
+pw.weight", "blocks.3.2
+.bn1.weight", "blocks.3
+.2.bn1.bias", "blocks.3
+.2.bn1.running_mean", "
+blocks.3.2.bn1.running_
+var", "blocks.3.2.bn1.n
+um_batches_tracked", "b
+locks.3.2.conv_dw.weigh
+t", "blocks.3.2.bn2.wei
+ght", "blocks.3.2.bn2.b
+ias", "blocks.3.2.bn2.r
+unning_mean", "blocks.3
+.2.bn2.running_var", "b
+locks.3.2.bn2.num_batch
+es_tracked", "blocks.3.
+2.se.conv_reduce.weight
+", "blocks.3.2.se.conv_
+reduce.bias", "blocks.3
+.2.se.conv_expand.weigh
+t", "blocks.3.2.se.conv
+_expand.bias", "blocks.
+3.2.conv_pwl.weight", "
+blocks.3.2.bn3.weight",
+ "blocks.3.2.bn3.bias",
+ "blocks.3.2.bn3.runnin
+g_mean", "blocks.3.2.bn
+3.running_var", "blocks
+.3.2.bn3.num_batches_tr
+acked", "blocks.4.0.con
+v_pw.weight", "blocks.4
+.0.bn1.weight", "blocks
+.4.0.bn1.bias", "blocks
+.4.0.bn1.running_mean",
+ "blocks.4.0.bn1.runnin
+g_var", "blocks.4.0.bn1
+.num_batches_tracked", 
+"blocks.4.0.conv_dw.wei
+ght", "blocks.4.0.bn2.w
+eight", "blocks.4.0.bn2
+.bias", "blocks.4.0.bn2
+.running_mean", "blocks
+.4.0.bn2.running_var", 
+"blocks.4.0.bn2.num_bat
+ches_tracked", "blocks.
+4.0.se.conv_reduce.weig
+ht", "blocks.4.0.se.con
+v_reduce.bias", "blocks
+.4.0.se.conv_expand.wei
+ght", "blocks.4.0.se.co
+nv_expand.bias", "block
+s.4.0.conv_pwl.weight",
+ "blocks.4.0.bn3.weight
+", "blocks.4.0.bn3.bias
+", "blocks.4.0.bn3.runn
+ing_mean", "blocks.4.0.
+bn3.running_var", "bloc
+ks.4.0.bn3.num_batches_
+tracked", "blocks.4.1.c
+onv_pw.weight", "blocks
+.4.1.bn1.weight", "bloc
+ks.4.1.bn1.bias", "bloc
+ks.4.1.bn1.running_mean
+", "blocks.4.1.bn1.runn
+ing_var", "blocks.4.1.b
+n1.num_batches_tracked"
+, "blocks.4.1.conv_dw.w
+eight", "blocks.4.1.bn2
+.weight", "blocks.4.1.b
+n2.bias", "blocks.4.1.b
+n2.running_mean", "bloc
+ks.4.1.bn2.running_var"
+, "blocks.4.1.bn2.num_b
+atches_tracked", "block
+s.4.1.se.conv_reduce.we
+ight", "blocks.4.1.se.c
+onv_reduce.bias", "bloc
+ks.4.1.se.conv_expand.w
+eight", "blocks.4.1.se.
+conv_expand.bias", "blo
+cks.4.1.conv_pwl.weight
+", "blocks.4.1.bn3.weig
+ht", "blocks.4.1.bn3.bi
+as", "blocks.4.1.bn3.ru
+nning_mean", "blocks.4.
+1.bn3.running_var", "bl
+ocks.4.1.bn3.num_batche
+s_tracked", "blocks.4.2
+.conv_pw.weight", "bloc
+ks.4.2.bn1.weight", "bl
+ocks.4.2.bn1.bias", "bl
+ocks.4.2.bn1.running_me
+an", "blocks.4.2.bn1.ru
+nning_var", "blocks.4.2
+.bn1.num_batches_tracke
+d", "blocks.4.2.conv_dw
+.weight", "blocks.4.2.b
+n2.weight", "blocks.4.2
+.bn2.bias", "blocks.4.2
+.bn2.running_mean", "bl
+ocks.4.2.bn2.running_va
+r", "blocks.4.2.bn2.num
+_batches_tracked", "blo
+cks.4.2.se.conv_reduce.
+weight", "blocks.4.2.se
+.conv_reduce.bias", "bl
+ocks.4.2.se.conv_expand
+.weight", "blocks.4.2.s
+e.conv_expand.bias", "b
+locks.4.2.conv_pwl.weig
+ht", "blocks.4.2.bn3.we
+ight", "blocks.4.2.bn3.
+bias", "blocks.4.2.bn3.
+running_mean", "blocks.
+4.2.bn3.running_var", "
+blocks.4.2.bn3.num_batc
+hes_tracked", "blocks.5
+.0.conv_pw.weight", "bl
+ocks.5.0.bn1.weight", "
+blocks.5.0.bn1.bias", "
+blocks.5.0.bn1.running_
+mean", "blocks.5.0.bn1.
+running_var", "blocks.5
+.0.bn1.num_batches_trac
+ked", "blocks.5.0.conv_
+dw.weight", "blocks.5.0
+.bn2.weight", "blocks.5
+.0.bn2.bias", "blocks.5
+.0.bn2.running_mean", "
+blocks.5.0.bn2.running_
+var", "blocks.5.0.bn2.n
+um_batches_tracked", "b
+locks.5.0.se.conv_reduc
+e.weight", "blocks.5.0.
+se.conv_reduce.bias", "
+blocks.5.0.se.conv_expa
+nd.weight", "blocks.5.0
+.se.conv_expand.bias", 
+"blocks.5.0.conv_pwl.we
+ight", "blocks.5.0.bn3.
+weight", "blocks.5.0.bn
+3.bias", "blocks.5.0.bn
+3.running_mean", "block
+s.5.0.bn3.running_var",
+ "blocks.5.0.bn3.num_ba
+tches_tracked", "blocks
+.5.1.conv_pw.weight", "
+blocks.5.1.bn1.weight",
+ "blocks.5.1.bn1.bias",
+ "blocks.5.1.bn1.runnin
+g_mean", "blocks.5.1.bn
+1.running_var", "blocks
+.5.1.bn1.num_batches_tr
+acked", "blocks.5.1.con
+v_dw.weight", "blocks.5
+.1.bn2.weight", "blocks
+.5.1.bn2.bias", "blocks
+.5.1.bn2.running_mean",
+ "blocks.5.1.bn2.runnin
+g_var", "blocks.5.1.bn2
+.num_batches_tracked", 
+"blocks.5.1.se.conv_red
+uce.weight", "blocks.5.
+1.se.conv_reduce.bias",
+ "blocks.5.1.se.conv_ex
+pand.weight", "blocks.5
+.1.se.conv_expand.bias"
+, "blocks.5.1.conv_pwl.
+weight", "blocks.5.1.bn
+3.weight", "blocks.5.1.
+bn3.bias", "blocks.5.1.
+bn3.running_mean", "blo
+cks.5.1.bn3.running_var
+", "blocks.5.1.bn3.num_
+batches_tracked", "bloc
+ks.5.2.conv_pw.weight",
+ "blocks.5.2.bn1.weight
+", "blocks.5.2.bn1.bias
+", "blocks.5.2.bn1.runn
+ing_mean", "blocks.5.2.
+bn1.running_var", "bloc
+ks.5.2.bn1.num_batches_
+tracked", "blocks.5.2.c
+onv_dw.weight", "blocks
+.5.2.bn2.weight", "bloc
+ks.5.2.bn2.bias", "bloc
+ks.5.2.bn2.running_mean
+", "blocks.5.2.bn2.runn
+ing_var", "blocks.5.2.b
+n2.num_batches_tracked"
+, "blocks.5.2.se.conv_r
+educe.weight", "blocks.
+5.2.se.conv_reduce.bias
+", "blocks.5.2.se.conv_
+expand.weight", "blocks
+.5.2.se.conv_expand.bia
+s", "blocks.5.2.conv_pw
+l.weight", "blocks.5.2.
+bn3.weight", "blocks.5.
+2.bn3.bias", "blocks.5.
+2.bn3.running_mean", "b
+locks.5.2.bn3.running_v
+ar", "blocks.5.2.bn3.nu
+m_batches_tracked", "bl
+ocks.5.3.conv_pw.weight
+", "blocks.5.3.bn1.weig
+ht", "blocks.5.3.bn1.bi
+as", "blocks.5.3.bn1.ru
+nning_mean", "blocks.5.
+3.bn1.running_var", "bl
+ocks.5.3.bn1.num_batche
+s_tracked", "blocks.5.3
+.conv_dw.weight", "bloc
+ks.5.3.bn2.weight", "bl
+ocks.5.3.bn2.bias", "bl
+ocks.5.3.bn2.running_me
+an", "blocks.5.3.bn2.ru
+nning_var", "blocks.5.3
+.bn2.num_batches_tracke
+d", "blocks.5.3.se.conv
+_reduce.weight", "block
+s.5.3.se.conv_reduce.bi
+as", "blocks.5.3.se.con
+v_expand.weight", "bloc
+ks.5.3.se.conv_expand.b
+ias", "blocks.5.3.conv_
+pwl.weight", "blocks.5.
+3.bn3.weight", "blocks.
+5.3.bn3.bias", "blocks.
+5.3.bn3.running_mean", 
+"blocks.5.3.bn3.running
+_var", "blocks.5.3.bn3.
+num_batches_tracked", "
+blocks.6.0.conv_pw.weig
+ht", "blocks.6.0.bn1.we
+ight", "blocks.6.0.bn1.
+bias", "blocks.6.0.bn1.
+running_mean", "blocks.
+6.0.bn1.running_var", "
+blocks.6.0.bn1.num_batc
+hes_tracked", "blocks.6
+.0.conv_dw.weight", "bl
+ocks.6.0.bn2.weight", "
+blocks.6.0.bn2.bias", "
+blocks.6.0.bn2.running_
+mean", "blocks.6.0.bn2.
+running_var", "blocks.6
+.0.bn2.num_batches_trac
+ked", "blocks.6.0.se.co
+nv_reduce.weight", "blo
+cks.6.0.se.conv_reduce.
+bias", "blocks.6.0.se.c
+onv_expand.weight", "bl
+ocks.6.0.se.conv_expand
+.bias", "blocks.6.0.con
+v_pwl.weight", "blocks.
+6.0.bn3.weight", "block
+s.6.0.bn3.bias", "block
+s.6.0.bn3.running_mean"
+, "blocks.6.0.bn3.runni
+ng_var", "blocks.6.0.bn
+3.num_batches_tracked",
+ "conv_head.weight", "b
+n2.weight", "bn2.bias",
+ "bn2.running_mean", "b
+n2.running_var", "bn2.n
+um_batches_tracked", "c
+lassifier.weight", "cla
+ssifier.bias". 

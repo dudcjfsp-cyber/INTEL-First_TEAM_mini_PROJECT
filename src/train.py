@@ -1,6 +1,6 @@
 """
 전이학습 학습 스크립트 (train.py)
-EfficientNet-B0 기반 분리수거 재질 분류 모델 학습
+MobileNetV3-Small 기반 듀얼 헤드 (재질, 오염도) 동시 판별 모델 학습
 """
 
 import os
@@ -11,146 +11,185 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 import timm
 
+# 새로 만든 데이터셋 임포트
+from dataset import RecyclingDualHeadDataset
+
 # ─── 클래스 설정 ─────────────────────────────────────────
-CLASS_NAMES = ["plastic", "can", "paper", "glass", "trash"]
+CLASS_NAMES = ["plastic", "can", "paper", "glass"] # 4개 클래스 (trash 제거)
 CLASS_KO = {
     "plastic": "플라스틱",
     "can": "캔",
     "paper": "종이",
-    "glass": "유리",
-    "trash": "기타(재활용불가)"
+    "glass": "유리"
 }
-RECYCLABLE = {"plastic": True, "can": True, "paper": True, "glass": True, "trash": False}
+# 오염 헤드 판별 명칭
+CONTAM_KO = {0: "깨끗함", 1: "오염됨"}
+
+# 기본적으로 모든 4개 클래스는 재질 자체로는 재활용 기능. (최종은 오염도가 0일때만 true)
+RECYCLABLE = {"plastic": True, "can": True, "paper": True, "glass": True}
 
 
-def build_model(num_classes: int, pretrained: bool = True, freeze_backbone: bool = True):
-    """EfficientNet-B0 모델 구성 (timm 라이브러리)"""
-    model = timm.create_model(
-        "efficientnet_b0",
-        pretrained=pretrained,
-        num_classes=num_classes
-    )
-
-    if freeze_backbone:
-        # 백본 프리징 → 분류 헤드만 학습 (전이학습 1단계)
-        for name, param in model.named_parameters():
-            if "classifier" not in name:
+class DualHeadMobileNetV3(nn.Module):
+    """MobileNetV3 Small을 백본으로 하는 듀얼 헤드 아키텍처"""
+    def __init__(self, num_material_classes: int = 4, pretrained: bool = True, freeze_backbone: bool = True):
+        super(DualHeadMobileNetV3, self).__init__()
+        
+        # PRD/TRD에 명시된 MobileNetV3 Small 로드
+        self.backbone = timm.create_model("mobilenetv3_small_100", pretrained=pretrained)
+        
+        if freeze_backbone:
+            for param in self.backbone.parameters():
                 param.requires_grad = False
-        print("  백본 동결(freeze) 완료 - 분류 헤드만 학습")
-    else:
-        print("  전체 파라미터 학습 (fine-tuning)")
+            print("  백본 동결(freeze) 완료 - 분류 헤드만 학습")
+            
+        # 백본의 마지막 피처 차원 파악 (MobileNetV3 본래 classifier의 in_features)
+        in_features = self.backbone.classifier.in_features
+        
+        # 기존 classifier(단일 헤드) 제거
+        self.backbone.classifier = nn.Identity()
+        
+        # 새로운 듀얼 헤드 부착
+        # 1. 재질 분류 헤드 (4개 클래스)
+        self.material_head = nn.Linear(in_features, num_material_classes)
+        
+        # 2. 오염도 판별 헤드 (이진 분류용 1개 클래스 로그 로짓)
+        self.contamination_head = nn.Linear(in_features, 1)
 
-    return model
-
-
-def get_transforms(img_size: int = 224):
-    """학습/검증용 이미지 변환"""
-    train_tf = transforms.Compose([
-        transforms.Resize((img_size + 32, img_size + 32)),
-        transforms.RandomCrop(img_size),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(15),
-        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    val_tf = transforms.Compose([
-        transforms.Resize((img_size, img_size)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    return train_tf, val_tf
+    def forward(self, x):
+        # [B, in_features]
+        features = self.backbone(x)
+        
+        mat_logits = self.material_head(features) # [B, 4]
+        contam_logits = self.contamination_head(features).squeeze(1) # [B]
+        
+        return mat_logits, contam_logits
 
 
-def train_one_epoch(model, loader, criterion, optimizer, device):
+def train_one_epoch(model, loader, criterion_mat, criterion_contam, optimizer, device):
     model.train()
-    total_loss, correct, total = 0.0, 0, 0
+    total_loss = 0.0
+    correct_mat, correct_contam, total = 0, 0, 0
 
-    for images, labels in loader:
-        images, labels = images.to(device), labels.to(device)
+    for images, (mat_labels, contam_labels) in loader:
+        images = images.to(device)
+        mat_labels = mat_labels.to(device)
+        # Binary Cross Entropy는 float를 원함
+        contam_labels = contam_labels.to(device, dtype=torch.float32)
 
         optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, labels)
+        mat_logits, contam_logits = model(images)
+        
+        # Loss 계산
+        loss_mat = criterion_mat(mat_logits, mat_labels)
+        loss_contam = criterion_contam(contam_logits, contam_labels)
+        loss = loss_mat + loss_contam
+        
         loss.backward()
         optimizer.step()
 
         total_loss += loss.item() * images.size(0)
-        _, predicted = outputs.max(1)
-        correct += predicted.eq(labels).sum().item()
+        
+        # 정확도 기록용 (Material)
+        _, mat_pred = mat_logits.max(1)
+        correct_mat += mat_pred.eq(mat_labels).sum().item()
+        
+        # 정확도 기록용 (Contamination: 0.0 이상이면 1(오염됨), 미만이면 0(깨끗함))
+        contam_pred = (contam_logits > 0.0).float()
+        correct_contam += contam_pred.eq(contam_labels).sum().item()
+        
         total += images.size(0)
 
-    return total_loss / total, 100.0 * correct / total
+    return total_loss / total, 100.0 * correct_mat / total, 100.0 * correct_contam / total
 
 
 @torch.no_grad()
-def validate(model, loader, criterion, device):
+def validate(model, loader, criterion_mat, criterion_contam, device):
     model.eval()
-    total_loss, correct, total = 0.0, 0, 0
+    total_loss = 0.0
+    correct_mat, correct_contam, total = 0, 0, 0
 
-    for images, labels in loader:
-        images, labels = images.to(device), labels.to(device)
-        outputs = model(images)
-        loss = criterion(outputs, labels)
+    for images, (mat_labels, contam_labels) in loader:
+        images = images.to(device)
+        mat_labels = mat_labels.to(device)
+        contam_labels = contam_labels.to(device, dtype=torch.float32)
+
+        mat_logits, contam_logits = model(images)
+        
+        loss_mat = criterion_mat(mat_logits, mat_labels)
+        loss_contam = criterion_contam(contam_logits, contam_labels)
+        loss = loss_mat + loss_contam
 
         total_loss += loss.item() * images.size(0)
-        _, predicted = outputs.max(1)
-        correct += predicted.eq(labels).sum().item()
+        
+        _, mat_pred = mat_logits.max(1)
+        correct_mat += mat_pred.eq(mat_labels).sum().item()
+        
+        contam_pred = (contam_logits > 0.0).float()
+        correct_contam += contam_pred.eq(contam_labels).sum().item()
+        
         total += images.size(0)
 
-    return total_loss / total, 100.0 * correct / total
+    return total_loss / total, 100.0 * correct_mat / total, 100.0 * correct_contam / total
 
 
 def train(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\n{'='*60}")
-    print(f"  재활용 분류 모델 전이학습")
+    print(f"  듀얼 헤드 모델 전이학습 (재질 + 오염도)")
     print(f"{'='*60}")
     print(f"  디바이스    : {device}")
     print(f"  에폭        : {args.epochs}")
     print(f"  배치 크기   : {args.batch_size}")
-    print(f"  학습률      : {args.lr}")
     print(f"  데이터 경로 : {args.data_dir}")
     print(f"{'='*60}\n")
 
-    # ── 데이터 로드 ──
-    train_tf, val_tf = get_transforms()
+    # ── 데이터 로드 (커스텀 듀얼 헤드 데이터셋 활용) ──
+    class_to_idx = {name: idx for idx, name in enumerate(CLASS_NAMES)}
+    
     train_dir = os.path.join(args.data_dir, "train")
-    val_dir = os.path.join(args.data_dir, "val")
-
     if not os.path.exists(train_dir):
         print(f"❌ 오류: 학습 데이터 폴더를 찾을 수 없습니다: {train_dir}")
-        print("   data/train/ 폴더 안에 클래스별 이미지를 넣어주세요.")
         return
 
-    train_dataset = datasets.ImageFolder(train_dir, transform=train_tf)
-    val_dataset = datasets.ImageFolder(val_dir, transform=val_tf) if os.path.exists(val_dir) else None
-
+    train_dataset = RecyclingDualHeadDataset(train_dir, class_to_idx, is_train=True)
+    
     print(f"  학습 샘플 수: {len(train_dataset)}")
-    print(f"  클래스 목록 : {train_dataset.classes}")
+    print(f"  재질 클래스 : {CLASS_NAMES}")
 
     train_loader = DataLoader(
         train_dataset, batch_size=args.batch_size,
         shuffle=True, num_workers=0, pin_memory=(device.type == "cuda")
     )
-    val_loader = DataLoader(
-        val_dataset, batch_size=args.batch_size,
-        shuffle=False, num_workers=0
-    ) if val_dataset else None
+    
+    # Val 데이터셋이 있을 경우 로드
+    val_dir = os.path.join(args.data_dir, "val")
+    val_loader = None
+    if os.path.exists(val_dir):
+        val_dataset = RecyclingDualHeadDataset(val_dir, class_to_idx, is_train=False)
+        val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     # ── 모델 구성 ──
-    num_classes = len(train_dataset.classes)
-    print(f"\n[모델 초기화] EfficientNet-B0 (num_classes={num_classes})")
-    model = build_model(num_classes=num_classes, pretrained=True, freeze_backbone=args.freeze)
+    num_classes = len(CLASS_NAMES)
+    print(f"\n[모델 초기화] Dual-Head MobileNetV3 Small")
+    model = DualHeadMobileNetV3(num_material_classes=num_classes, pretrained=True, freeze_backbone=args.freeze)
+    
+    # 기존 가중치 이어서 학습 (파인튜닝용)
+    if args.resume:
+        weight_path = os.path.join(args.save_dir, "best_model.pth")
+        if os.path.exists(weight_path):
+            model.load_state_dict(torch.load(weight_path, map_location=device))
+            print(f"  ✅ 기존 가중치 로드 완료 (파인튜닝 모드): {weight_path}")
+        else:
+            print(f"  ⚠️ 기존 가중치 없음. ImageNet 사전학습 가중치로 시작합니다.")
+    
     model = model.to(device)
 
     # ── 학습 설정 ──
-    criterion = nn.CrossEntropyLoss()
+    criterion_mat = nn.CrossEntropyLoss()
+    criterion_contam = nn.BCEWithLogitsLoss()
+    
     optimizer = optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=args.lr
@@ -158,67 +197,64 @@ def train(args):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
     # ── 학습 루프 ──
-    best_val_acc = 0.0
+    best_mat_acc = 0.0
     os.makedirs(args.save_dir, exist_ok=True)
 
     for epoch in range(1, args.epochs + 1):
         start = time.time()
-        train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
+        train_loss, tr_mat_acc, tr_contam_acc = train_one_epoch(
+            model, train_loader, criterion_mat, criterion_contam, optimizer, device
+        )
         elapsed = time.time() - start
 
-        log = f"  에폭 [{epoch:2d}/{args.epochs}] | 학습 손실: {train_loss:.4f} | 학습 정확도: {train_acc:.1f}% | 시간: {elapsed:.1f}s"
+        log = f"에폭 [{epoch:2d}/{args.epochs}] 손실: {train_loss:.4f} | 재질: {tr_mat_acc:.1f}% 오염: {tr_contam_acc:.1f}% | 시간: {elapsed:.1f}s"
 
         if val_loader:
-            val_loss, val_acc = validate(model, val_loader, criterion, device)
-            log += f" | 검증 손실: {val_loss:.4f} | 검증 정확도: {val_acc:.1f}%"
+            val_loss, va_mat_acc, va_contam_acc = validate(
+                model, val_loader, criterion_mat, criterion_contam, device
+            )
+            log += f" || [검증] 재질: {va_mat_acc:.1f}% 오염: {va_contam_acc:.1f}%"
 
-            if val_acc > best_val_acc:
-                best_val_acc = val_acc
-                save_path = os.path.join(args.save_dir, "best_model.pth")
-                torch.save(model.state_dict(), save_path)
+            # 베스트 모델 기준을 재질 정확도로 둠
+            if va_mat_acc > best_mat_acc:
+                best_mat_acc = va_mat_acc
+                torch.save(model.state_dict(), os.path.join(args.save_dir, "best_model.pth"))
                 log += " ← 베스트 저장 ✅"
         else:
             # 검증셋 없을 경우 매 에폭 저장
-            save_path = os.path.join(args.save_dir, "best_model.pth")
-            torch.save(model.state_dict(), save_path)
+            torch.save(model.state_dict(), os.path.join(args.save_dir, "best_model.pth"))
 
         print(log)
         scheduler.step()
 
     # 클래스 정보 저장
-    class_to_idx = train_dataset.class_to_idx
     config = {
-        "model_name": "efficientnet_b0",
+        "model_name": "mobilenetv3_small_100_dual_head",
         "num_classes": num_classes,
-        "class_names": list(class_to_idx.keys()),
+        "class_names": CLASS_NAMES,
         "class_to_idx": class_to_idx,
         "class_ko": CLASS_KO,
         "recyclable": RECYCLABLE,
         "input_size": [3, 224, 224],
-        "best_val_acc": best_val_acc,
     }
-    config_path = os.path.join(args.save_dir, "model_config.json")
-    with open(config_path, "w", encoding="utf-8") as f:
+    with open(os.path.join(args.save_dir, "model_config.json"), "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 
     print(f"\n{'='*60}")
-    print(f"  학습 완료!")
-    print(f"  최고 검증 정확도: {best_val_acc:.1f}%")
-    print(f"  모델 저장 위치: {os.path.join(args.save_dir, 'best_model.pth')}")
-    print(f"  다음 단계: python src/inference.py  또는  streamlit run src/app.py")
+    print(f"  학습 완료 (모델 저장: {args.save_dir}/best_model.pth)")
     print(f"{'='*60}\n")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="재활용 분류 전이학습")
-    parser.add_argument("--data_dir", type=str, default="data", help="데이터 루트 경로")
+    parser = argparse.ArgumentParser(description="듀얼 헤드 재활용 모델 전이학습")
+    parser.add_argument("--data_dir", type=str, default="data", help="데이터 경로")
     parser.add_argument("--save_dir", type=str, default="models", help="모델 저장 경로")
     parser.add_argument("--epochs", type=int, default=10, help="학습 에폭 수")
     parser.add_argument("--batch_size", type=int, default=16, help="배치 크기")
     parser.add_argument("--lr", type=float, default=1e-3, help="학습률")
-    parser.add_argument("--freeze", action="store_true", default=True,
-                        help="백본 동결 여부 (기본: True)")
-    parser.add_argument("--no_freeze", dest="freeze", action="store_false",
-                        help="백본 동결 해제 (full fine-tuning)")
+    parser.add_argument("--freeze", action="store_true", default=True)
+    parser.add_argument("--no_freeze", dest="freeze", action="store_false")
+    parser.add_argument("--resume", action="store_true", default=False,
+                        help="기존 best_model.pth를 불러와서 이어서 학습 (파인튜닝용)")
     args = parser.parse_args()
     train(args)
