@@ -6,7 +6,7 @@ __pycache__/
 # Data and Models (Large files)
 data/
 Garbage classification/
-models/*.pth
+#models/*.pth
 models/*.bin
 models/*.json
 models/*.onnx
