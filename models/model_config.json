@@ -1,0 +1,38 @@
+{
+  "model_name": "efficientnet_b0",
+  "num_classes": 5,
+  "class_names": [
+    "can",
+    "glass",
+    "paper",
+    "plastic",
+    "trash"
+  ],
+  "class_to_idx": {
+    "can": 0,
+    "glass": 1,
+    "paper": 2,
+    "plastic": 3,
+    "trash": 4
+  },
+  "class_ko": {
+    "plastic": "플라스틱",
+    "can": "캔",
+    "paper": "종이",
+    "glass": "유리",
+    "trash": "기타(재활용불가)"
+  },
+  "recyclable": {
+    "plastic": true,
+    "can": true,
+    "paper": true,
+    "glass": true,
+    "trash": false
+  },
+  "input_size": [
+    3,
+    224,
+    224
+  ],
+  "best_val_acc": 91.73228346456693
+}

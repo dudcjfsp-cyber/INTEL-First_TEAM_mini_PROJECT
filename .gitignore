@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data and Models (Large files)
+data/
+Garbage classification/
+models/*.pth
+models/*.bin
+models/*.onnx
+models/*.tflite
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Virtual Environment
+venv/
+.venv/
+env/
+.env/
