@@ -26,15 +26,16 @@
 ## 3. 소프트웨어 요구사항 (Software Requirements)
 
 ### 3-1. 개발 환경
-- **Language**: Python 3.10.x 이상
+- **Language**: Python 3.11.9 로 통일
 - **딥러닝**: PyTorch 2.1.0+, Torchvision 0.16.0+
 - **추론 최적화**: ONNX Runtime (CPU/GPU 가속 가능 환경)
 - **라이브러리**: `opencv-python`, `ultralytics`, `timm`, `numpy`, `streamlit`
 
 ### 3-2. 외부 연동 인터페이스
 - **Webcam API**: OpenCV `VideoCapture`를 통한 프레임 획득 (최소 720p 30fps 지원 권장)
-- **UI Interaction**: Streamlit 기반의 실시간 프레임 렌더링 및 결과 오버레이
+- **UI Interaction**:  React 사용
 - **Stitch/Antigravity**: UI 디자인 에셋 반영 및 프론트엔드 코드 동기화
+- **Backend**: FastAPI 사용
 
 ## 4. 성능 요구사항 (Performance Requirements)
 
