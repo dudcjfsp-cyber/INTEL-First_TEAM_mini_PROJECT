@@ -8,6 +8,7 @@ data/
 Garbage classification/
 models/*.pth
 models/*.bin
+models/*.json
 models/*.onnx
 models/*.tflite
 
