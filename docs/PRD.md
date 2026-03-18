@@ -56,6 +56,7 @@
 - **영상 처리**: OpenCV
 - **UI 프레임워크**: Streamlit / Gradio (PoC용)
 - **최적화**: ONNX / TFLite (향후 모바일 이식용)
+- **Frontend**: Stitch 이용하여 UI 디자인 후, Antigravity에 반영
 
 ## 6. 개발 로드맵 (Roadmap)
 - **1단계 (PoC)**: 노트북 웹캠 기반 유리/종이/플라스틱/캔 분류 데모 완성. (현재 단계)
