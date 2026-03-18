@@ -333,8 +333,9 @@
                     const matKo = pred.korean_label;
                     const conf = (pred.confidence * 100).toFixed(1);
                     const status = pred.contamination_status === 'clean' ? '깨끗함' : '오염됨';
+                    const { x1, y1, x2, y2 } = pred.bbox;
                     
-                    statusText.innerText = `[분류: ${matKo}, 신뢰도: ${conf}%, 상태: ${status}]`;
+                    statusText.innerText = `[분류: ${matKo}, 신뢰도: ${conf}%, 상태: ${status}] (좌표: ${x1}, ${y1}, ${x2}, ${y2})`;
                     
                     // 재활용 가능 여부에 따른 색상 변화
                     if (pred.is_recyclable) {
