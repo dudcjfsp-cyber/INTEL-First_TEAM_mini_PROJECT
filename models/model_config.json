@@ -1,38 +1,33 @@
 {
-  "model_name": "efficientnet_b0",
-  "num_classes": 5,
+  "model_name": "mobilenetv3_small_100_dual_head",
+  "num_classes": 4,
   "class_names": [
-    "can",
-    "glass",
-    "paper",
     "plastic",
-    "trash"
+    "can",
+    "paper",
+    "glass"
   ],
   "class_to_idx": {
-    "can": 0,
-    "glass": 1,
+    "plastic": 0,
+    "can": 1,
     "paper": 2,
-    "plastic": 3,
-    "trash": 4
+    "glass": 3
   },
   "class_ko": {
     "plastic": "플라스틱",
     "can": "캔",
     "paper": "종이",
-    "glass": "유리",
-    "trash": "기타(재활용불가)"
+    "glass": "유리"
   },
   "recyclable": {
     "plastic": true,
     "can": true,
     "paper": true,
-    "glass": true,
-    "trash": false
+    "glass": true
   },
   "input_size": [
     3,
     224,
     224
-  ],
-  "best_val_acc": 91.73228346456693
+  ]
 }
