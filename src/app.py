@@ -1,36 +1,23 @@
 """
 Streamlit 웹캠 데모 앱 (app.py)
-분리수거 실시간 분류 - EfficientNet-B0 기반
+분리수거 실시간 분류 - Dual-Head MobileNetV3 기반
 """
 
 import os
 import sys
-import json
 import time
 import numpy as np
-import torch
-import torch.nn.functional as F
-import timm
 import cv2
+import torch
 from PIL import Image
-from torchvision import transforms
 import streamlit as st
 
 # 프로젝트 루트를 sys.path에 추가
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# ─── 경로 설정 ───────────────────────────────────────────
-MODEL_PATH = os.path.join("models", "best_model.pth")
-CONFIG_PATH = os.path.join("models", "model_config.json")
+# 추론 함수 임포트
+from src.inference import load_config, load_model, predict, CLASS_KO
 
-DEFAULT_CLASSES = ["plastic", "can", "paper", "glass", "trash"]
-CLASS_KO = {
-    "plastic": "플라스틱",
-    "can": "캔",
-    "paper": "종이",
-    "glass": "유리",
-    "trash": "기타(재활용불가)"
-}
 CLASS_ICON = {
     "plastic": "🧴",
     "can": "🥫",
@@ -38,12 +25,10 @@ CLASS_ICON = {
     "glass": "🍾",
     "trash": "🗑️"
 }
-RECYCLABLE = {"plastic": True, "can": True, "paper": True, "glass": True, "trash": False}
-
 
 # ─── 페이지 설정 ─────────────────────────────────────────
 st.set_page_config(
-    page_title="재활용 분류 데모",
+    page_title="재활용 듀얼헤드 데모",
     page_icon="♻️",
     layout="wide"
 )
@@ -86,119 +71,58 @@ st.markdown("""
         color: white;
         font-weight: bold;
         font-size: 1.3rem;
-        margin: 0.5rem;
+        margin: 0.2rem;
     }
-    .conf-bar-container {
-        background: #ecf0f1;
-        border-radius: 8px;
-        height: 18px;
-        margin: 4px 0;
-        overflow: hidden;
+    .contam-badge {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        background: #e67e22;
+        color: white;
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin: 0.2rem;
     }
-    .conf-bar {
-        height: 100%;
-        border-radius: 8px;
-        background: linear-gradient(90deg, #2ecc71, #27ae60);
-        transition: width 0.3s ease;
-    }
-    .sidebar-info {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 0.5rem 0;
+    .clean-badge {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        background: #3498db;
+        color: white;
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin: 0.2rem;
     }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ─── 모델 로드 (캐싱) ─────────────────────────────────────
 @st.cache_resource
 def load_everything():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # config 로드
-    if os.path.exists(CONFIG_PATH):
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            config = json.load(f)
-    else:
-        config = {
-            "model_name": "efficientnet_b0",
-            "num_classes": len(DEFAULT_CLASSES),
-            "class_names": DEFAULT_CLASSES,
-            "class_ko": CLASS_KO,
-            "recyclable": RECYCLABLE,
-        }
-
-    # 모델 로드
-    model = timm.create_model(
-        config["model_name"],
-        pretrained=not os.path.exists(MODEL_PATH),
-        num_classes=config["num_classes"]
-    )
-    if os.path.exists(MODEL_PATH):
-        state_dict = torch.load(MODEL_PATH, map_location=device)
-        model.load_state_dict(state_dict)
-    model = model.to(device)
-    model.eval()
-
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    return model, transform, config, device
-
-
-@torch.no_grad()
-def predict(model, image: Image.Image, transform, config, device):
-    tensor = transform(image.convert("RGB")).unsqueeze(0).to(device)
-    logits = model(tensor)
-    probs = F.softmax(logits, dim=1)[0].cpu().numpy()
-
-    class_names = config["class_names"]
-    top_idx = int(np.argmax(probs))
-    top_class = class_names[top_idx]
-    top_conf = float(probs[top_idx]) * 100
-
-    return {
-        "class_en": top_class,
-        "class_ko": config.get("class_ko", CLASS_KO).get(top_class, top_class),
-        "icon": CLASS_ICON.get(top_class, "📦"),
-        "confidence": top_conf,
-        "recyclable": config.get("recyclable", RECYCLABLE).get(top_class, False),
-        "all_probs": {class_names[i]: float(probs[i]) * 100 for i in range(len(class_names))},
-    }
-
+    config = load_config()
+    model = load_model(config, device)
+    return model, config, device
 
 # ─── 메인 UI ─────────────────────────────────────────────
 def main():
     # 헤더
     st.markdown("""
     <div class="main-header">
-        <h1>♻️ 재활용 분류 실시간 데모</h1>
+        <h1>♻️ 재활용 듀얼헤드(재질+오염) 실시간 데모</h1>
         <p>웹캠 앞에 분리수거 대상을 비춰보세요</p>
     </div>
     """, unsafe_allow_html=True)
 
     # 모델 로드
-    with st.spinner("모델 로딩 중..."):
-        model, transform, config, device = load_everything()
+    with st.spinner("듀얼헤드 모델 로딩 중..."):
+        model, config, device = load_everything()
 
     # 사이드바
     with st.sidebar:
         st.header("⚙️ 설정")
-        confidence_threshold = st.slider("신뢰도 임계값 (%)", 0, 100, 50, 5)
+        confidence_threshold = st.slider("재질 신뢰도 임계값 (%)", 0, 100, 50, 5)
         smoothing = st.slider("스무딩 프레임 수", 1, 10, 3)
-        st.markdown("---")
-        st.header("📋 분류 클래스")
-        for cls in config["class_names"]:
-            ko = config.get("class_ko", CLASS_KO).get(cls, cls)
-            can = config.get("recyclable", RECYCLABLE).get(cls, False)
-            icon = CLASS_ICON.get(cls, "📦")
-            badge = "✅ 재활용 가능" if can else "❌ 재활용 불가"
-            st.markdown(f"{icon} **{ko}** — {badge}")
-
         st.markdown("---")
         st.info(f"🖥️ 디바이스: `{'GPU (CUDA)' if device.type == 'cuda' else 'CPU'}`")
 
@@ -213,17 +137,16 @@ def main():
             st.subheader("웹캠 화면")
             run = st.toggle("🔴 웹캠 시작", value=False)
             frame_placeholder = st.empty()
-            status_placeholder = st.empty()
 
         with col2:
-            st.subheader("예측 결과")
+            st.subheader("듀얼 헤드 예측 결과")
             result_placeholder = st.empty()
             prob_placeholder = st.empty()
 
         if run:
             cap = cv2.VideoCapture(0)
             if not cap.isOpened():
-                st.error("❌ 웹캠을 열 수 없습니다. 웹캠 연결 상태를 확인해주세요.")
+                st.error("❌ 웹캠을 열 수 없습니다.")
             else:
                 recent_preds = []
                 while run:
@@ -234,48 +157,62 @@ def main():
 
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     pil_img = Image.fromarray(frame_rgb)
-                    result = predict(model, pil_img, transform, config, device)
+                    
+                    # 듀얼헤드 추론
+                    result = predict(model, pil_img, config, device)
+                    mat = result["material"]
+                    contam = result["contamination"]
 
                     # 스무딩
-                    recent_preds.append(result["class_en"])
+                    recent_preds.append(mat["class_en"])
                     if len(recent_preds) > smoothing:
                         recent_preds.pop(0)
                     from collections import Counter
                     smoothed_class = Counter(recent_preds).most_common(1)[0][0]
 
                     # 프레임에 결과 오버레이
-                    conf_color = (0, 200, 80) if result["recyclable"] else (220, 50, 50)
-                    label = f"{result['class_ko']} {result['confidence']:.0f}%"
-                    cv2.putText(frame_rgb, label, (10, 40),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1.2, conf_color, 3)
-                    recyc_text = "RECYCLABLE" if result["recyclable"] else "NOT RECYCLABLE"
-                    cv2.putText(frame_rgb, recyc_text, (10, 80),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.9, conf_color, 2)
+                    conf_color = (0, 200, 80) if result["final_recyclable"] else (220, 50, 50)
+                    label = f"{mat['class_ko']} {mat['confidence']:.0f}%"
+                    contam_label = f"Contam: {contam['is_contaminated']}"
+                    
+                    cv2.putText(frame_rgb, label, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, conf_color, 3)
+                    cv2.putText(frame_rgb, contam_label, (10, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,165,0), 2)
+                    
+                    recyc_text = "RECYCLABLE" if result["final_recyclable"] else "NOT RECYCLABLE"
+                    cv2.putText(frame_rgb, recyc_text, (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.9, conf_color, 2)
 
                     frame_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
 
                     # 결과 표시
-                    if result["confidence"] >= confidence_threshold:
-                        css_class = "result-ok" if result["recyclable"] else "result-ng"
-                        recyc_label = "✅ 재활용 가능" if result["recyclable"] else "❌ 재활용 불가"
+                    if mat["confidence"] >= confidence_threshold:
+                        css_class = "result-ok" if result["final_recyclable"] else "result-ng"
+                        recyc_label = "✅ 최종: 재활용 가능" if result["final_recyclable"] else "❌ 최종: 재활용 불가"
+                        icon = CLASS_ICON.get(mat["class_en"], "📦")
+                        
+                        contam_css = "contam-badge" if contam["is_contaminated"] else "clean-badge"
+
                         result_placeholder.markdown(f"""
                         <div class="result-box {css_class}">
-                            <div style="font-size:2.5rem">{result['icon']}</div>
-                            <div class="class-badge">{result['class_ko']}</div>
+                            <div style="font-size:2.5rem">{icon}</div>
+                            <div>
+                                <span class="class-badge">재질: {mat['class_ko']} ({mat['confidence']:.1f}%)</span>
+                            </div>
+                            <div>
+                                <span class="{contam_css}">상태: {contam['status_ko']} ({contam['confidence']:.1f}%)</span>
+                            </div>
                             <div style="font-size:1.4rem; font-weight:bold; margin:0.5rem 0">{recyc_label}</div>
-                            <div style="font-size:1.1rem">신뢰도: <b>{result['confidence']:.1f}%</b></div>
                         </div>
                         """, unsafe_allow_html=True)
                     else:
-                        result_placeholder.info(f"⏳ 신뢰도 부족 ({result['confidence']:.1f}% < {confidence_threshold}%)")
+                        result_placeholder.info(f"⏳ 대기 중 (신뢰도 부족: {mat['confidence']:.1f}%)")
 
                     # 확률 분포
                     with prob_placeholder.container():
-                        st.markdown("**전체 확률 분포**")
+                        st.markdown("**재질 확률 분포**")
                         for cls, prob in sorted(result["all_probs"].items(), key=lambda x: -x[1]):
                             ko = config.get("class_ko", CLASS_KO).get(cls, cls)
-                            icon = CLASS_ICON.get(cls, "📦")
-                            st.markdown(f"{icon} {ko}")
+                            ico = CLASS_ICON.get(cls, "📦")
+                            st.markdown(f"{ico} {ko}")
                             st.progress(int(prob))
 
                     time.sleep(0.05)
@@ -292,26 +229,36 @@ def main():
                 st.image(img, caption="업로드된 이미지", use_container_width=True)
             with col2:
                 with st.spinner("추론 중..."):
-                    result = predict(model, img, transform, config, device)
+                    result = predict(model, img, config, device)
+                    mat = result["material"]
+                    contam = result["contamination"]
 
-                css_class = "result-ok" if result["recyclable"] else "result-ng"
-                recyc_label = "✅ 재활용 가능" if result["recyclable"] else "❌ 재활용 불가"
+                css_class = "result-ok" if result["final_recyclable"] else "result-ng"
+                recyc_label = "✅ 최종: 재활용 가능" if result["final_recyclable"] else "❌ 최종: 재활용 불가"
+                icon = CLASS_ICON.get(mat["class_en"], "📦")
+                
+                contam_css = "contam-badge" if contam["is_contaminated"] else "clean-badge"
+
                 st.markdown(f"""
                 <div class="result-box {css_class}">
-                    <div style="font-size:3rem">{result['icon']}</div>
-                    <div class="class-badge">{result['class_ko']}</div>
+                    <div style="font-size:3rem">{icon}</div>
+                    <div>
+                        <span class="class-badge">재질: {mat['class_ko']} ({mat['confidence']:.1f}%)</span>
+                    </div>
+                    <div>
+                        <span class="{contam_css}">상태: {contam['status_ko']} ({contam['confidence']:.1f}%)</span>
+                    </div>
                     <div style="font-size:1.5rem; font-weight:bold; margin:0.5rem 0">{recyc_label}</div>
-                    <div style="font-size:1.2rem">신뢰도: <b>{result['confidence']:.1f}%</b></div>
                 </div>
                 """, unsafe_allow_html=True)
 
                 st.markdown("---")
-                st.markdown("**전체 확률 분포**")
+                st.markdown("**재질 확률 분포**")
                 for cls, prob in sorted(result["all_probs"].items(), key=lambda x: -x[1]):
                     ko = config.get("class_ko", CLASS_KO).get(cls, cls)
-                    icon = CLASS_ICON.get(cls, "📦")
+                    ico = CLASS_ICON.get(cls, "📦")
                     col_a, col_b = st.columns([2, 1])
-                    col_a.markdown(f"{icon} {ko}")
+                    col_a.markdown(f"{ico} {ko}")
                     col_b.markdown(f"**{prob:.1f}%**")
                     st.progress(int(prob))
 
