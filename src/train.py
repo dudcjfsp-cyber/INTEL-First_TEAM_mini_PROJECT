@@ -17,18 +17,25 @@ import timm
 from dataset import RecyclingDualHeadDataset
 
 # ─── 클래스 설정 ─────────────────────────────────────────
-CLASS_NAMES = ["plastic", "can", "paper", "glass"] # 4개 클래스 (trash 제거)
+CLASS_NAMES = ["plastic", "can", "paper", "glass", "trash"] # 5개 클래스로 확장
 CLASS_KO = {
     "plastic": "플라스틱",
     "can": "캔",
     "paper": "종이",
-    "glass": "유리"
+    "glass": "유리",
+    "trash": "기타(쓰레기)"
 }
 # 오염 헤드 판별 명칭
 CONTAM_KO = {0: "깨끗함", 1: "오염됨"}
 
-# 기본적으로 모든 4개 클래스는 재질 자체로는 재활용 기능. (최종은 오염도가 0일때만 true)
-RECYCLABLE = {"plastic": True, "can": True, "paper": True, "glass": True}
+# 재질별 기본 재활용 가능 여부 (trash는 False)
+RECYCLABLE = {
+    "plastic": True, 
+    "can": True, 
+    "paper": True, 
+    "glass": True,
+    "trash": False
+}
 
 
 class DualHeadMobileNetV3(nn.Module):

@@ -45,7 +45,11 @@ class ModelHandler:
         # Load Classification Model
         self.classifier = DualHeadMobileNetV3(num_material_classes=self.config["num_classes"])
         if os.path.exists(self.model_path):
-            self.classifier.load_state_dict(torch.load(self.model_path, map_location=self.device))
+            try:
+                # strict=False를 사용하여 클래스 개수 변경 시에도 로딩 가능하게 함 (재학습 전까지는 부정확할 수 있음)
+                self.classifier.load_state_dict(torch.load(self.model_path, map_location=self.device), strict=False)
+            except Exception as e:
+                print(f"Warning: Could not load model weights strictly: {e}")
         self.classifier.to(self.device)
         self.classifier.eval()
         
@@ -71,13 +75,29 @@ class ModelHandler:
         detected = False
         
         if len(results) > 0 and len(results[0].boxes) > 0:
-            detected = True
-            # For simplicity, we process only the boxes detected by YOLO
-            # In a real 2-stage pipeline, we might filter for "waste" objects if detection model has multiple classes
+            # 이미지 중앙 좌표 계산
+            img_w, img_h = image.size
+            center_x, center_y = img_w / 2, img_h / 2
+            
+            # 모든 탐지 객체 중 중앙에서 가장 가까운 하나만 선택
+            best_box = None
+            min_dist = float('inf')
+            
             for box in results[0].boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+                bx1, by1, bx2, by2 = map(int, box.xyxy[0].tolist())
+                box_center_x = (bx1 + bx2) / 2
+                box_center_y = (by1 + by2) / 2
                 
-                # 2. Classification Stage (Crop & Classify)
+                dist = ((box_center_x - center_x)**2 + (box_center_y - center_y)**2)**0.5
+                if dist < min_dist:
+                    min_dist = dist
+                    best_box = (bx1, by1, bx2, by2)
+            
+            if best_box:
+                detected = True
+                x1, y1, x2, y2 = best_box
+                
+                # 2. Classification Stage (Crop & Classify) - 가장 중앙의 객체 하나만 처리
                 cropped_img = image.crop((x1, y1, x2, y2))
                 tensor = self.transform(cropped_img.convert("RGB")).unsqueeze(0).to(self.device)
                 

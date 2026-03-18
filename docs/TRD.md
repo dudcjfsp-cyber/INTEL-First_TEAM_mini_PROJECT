@@ -9,7 +9,7 @@
     - 다수 객체가 존재할 경우, Conf Score가 가장 높은 객체 또는 모든 객체에 대해 Bounding Box를 생성합니다.
 2.  **Stage 2: Feature Classification (MobileNetV3 Small)**
     - Stage 1에서 추출된 Bounding Box 영역을 Crop 하여 입력으로 사용합니다.
-    - 해당 객체의 세부 재질(유리/종이/플라스틱/캔) 및 오염 상태를 최종 분류합니다.
+    - 해당 객체의 세부 재질(유리/종이/플라스틱/캔/기타(Trash)) 및 오염 상태를 최종 분류합니다.
 
 ## 2. 모델 명세 (Model Specifications)
 
