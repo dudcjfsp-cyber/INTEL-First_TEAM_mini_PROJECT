@@ -39,8 +39,11 @@
 
 ## 4. 성능 요구사항 (Performance Requirements)
 
+- **Performance & Flow Control**: 
+    - 기본 전송 속도: **1 FPS** (1초당 1프레임).
+    - 흐름 제어: 서버로부터 판독 결과가 도착할 때까지 다음 프레임 전송을 대기(Skip)하여 네트워크 및 서버 부하를 최소화합니다.
 - **Latency (지연 시간)**: 프레임당 전체 추론 시간(Detection + Classification) 100ms 이내 목표 (CPU 기준).
-- **Throughput (처리량)**: 최소 10~15 FPS 이상의 실시간 화면 표시 보장.
+- **Throughput (처리량)**: 영상 전송 로직에 따라 유동적이나, 시각적 피드백은 끊김 없이 제공될 수 있도록 구성.
 - **Accuracy (정확도)**: PoC 단계 기준 주요 4종 클래스에 대해 Top-1 Accuracy 85% 이상 확보.
 - **Confidence Threshold**: 0.5 미만의 예측 결과는 "미인식" 또는 "기타"로 처리하여 오동작 방지.
 

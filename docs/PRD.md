@@ -23,6 +23,9 @@
 ### F1: 2단계 실시간 추론 파이프라인 (Detection & Classification)
 - 1단계 (Detection): YOLOv8-Nano 모델을 활용해 화면 내 쓰레기 객체의 위치를 실시간으로 탐지하고 바운딩 박스(Bounding Box) 추출
 - 2단계 (Classification): 추출된 영역(Cropped Tensor)을 MobileNetV3 Small 모델로 전달하여 재질(플라스틱, 캔, 종이 등) 및 오염도에 따른 재활용 가능 여부를 최종 판별
+- **영상 전송 로직**: 
+    - 카메라로 들어온 영상은 기본적으로 **1초에 1프레임(1 FPS)**을 서버로 전송합니다.
+    - 현재 프레임에 대한 판독 결과가 반환될 때까지 다음 화면 전송은 중단(Skip)됩니다.
 
 ### F2: 재활용 가능 여부 판별 (오염도 체크)
 - 객체의 상태(깨끗함 vs 오염됨)를 이진 분류(Binary Classification)로 판별.
