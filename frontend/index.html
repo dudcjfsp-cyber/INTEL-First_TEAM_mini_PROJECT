@@ -1,0 +1,252 @@
+< !DOCTYPE html >
+
+    <html lang="ko" class="bg-gray-100"><head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+        <title>Return to Me - 대시보드</title>
+        <!-- Tailwind CSS CDN -->
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <!-- Noto Sans KR Google Font -->
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet" />
+        <!-- Material Symbols for the camera icon -->
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+        <!-- Tailwind Configuration -->
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: '#2f7f33',
+                            surface: '#f8f9fa',
+                        },
+                        fontFamily: {
+                            sans: ['Noto Sans KR', 'Inter', 'sans-serif'],
+                        },
+                        borderRadius: {
+                            'custom': '8px',
+                        }
+                    }
+                }
+            }
+        </script>
+        <style data-purpose="base-layout">
+            body {
+                background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+    }
+            .safe-area-bottom {
+                padding-bottom: env(safe-area-inset-bottom);
+    }
+            .glass-effect {
+                background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+    }
+            .scanner-overlay {
+                background: linear-gradient(180deg, rgba(47, 127, 51, 0.2) 0%, rgba(0, 0, 0, 0.4) 100%);
+    }
+            .scanner-frame {
+                border: 2px solid rgba(47, 127, 51, 0.6);
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+    }
+        </style>
+    </head>
+        <body class="font-sans text-gray-900 overflow-x-hidden bg-gray-100">
+            <!-- 최상위 모바일 컨테이너 -->
+            <div style="max-width: 480px; margin: 0 auto; min-height: 100vh;" class="bg-white relative shadow-2xl">
+            <!-- BEGIN: MainHeader -->
+            <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center" data-purpose="app-top-nav">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-primary rounded-custom flex items-center justify-center">
+                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h1 class="font-bold text-lg tracking-tight text-gray-800">Return to Me</h1>
+                </div>
+                <button class="p-2 hover:bg-gray-100 rounded-full transition-colors" data-purpose="notification-button">
+                    <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                    </svg>
+                </button>
+            </header>
+            <!-- END: MainHeader -->
+            <main class="px-6 py-6 pb-24 space-y-6">
+                <!-- BEGIN: AssetSection -->
+                <section class="bg-primary rounded-custom p-6 text-white shadow-lg shadow-green-900/10" data-purpose="points-dashboard">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-sm font-medium opacity-90">총 자산</span>
+                        <div class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">포인트</div>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <h2 class="text-4xl font-bold">12,450</h2>
+                        <span class="text-lg opacity-80">P</span>
+                    </div>
+                    <div class="mt-6 flex justify-between items-center pt-4 border-t border-white/10">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                            <span class="text-xs">출금 가능: 5,000 P</span>
+                        </div>
+                        <button class="text-xs bg-white text-primary px-3 py-1.5 rounded-custom font-bold hover:bg-gray-100 transition-colors">
+                            지금 출금
+                        </button>
+                    </div>
+                </section>
+                <!-- END: AssetSection -->
+                <!-- BEGIN: AI Scanner Section -->
+                <section class="space-y-4" data-purpose="ai-scanner-section">
+                    <div class="bg-white rounded-custom border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="relative aspect-[4/3] bg-black overflow-hidden" data-purpose="camera-view">
+                            <!-- Webcam Video Stream -->
+                            <video id="webcam" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
+                            <!-- Simulated Camera Feed / Dark Green Overlay -->
+                            <div class="absolute inset-0 scanner-overlay"></div>
+                            <!-- Scanning Frame -->
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div class="w-48 h-48 border-2 border-primary/60 rounded-xl relative">
+                                    <!-- Corner accents -->
+                                    <div class="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-primary rounded-tl-sm"></div>
+                                    <div class="absolute -top-1 -right-1 w-4 h-4 border-t-4 border-r-4 border-primary rounded-tr-sm"></div>
+                                    <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-4 border-l-4 border-primary rounded-bl-sm"></div>
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-4 border-r-4 border-primary rounded-br-sm"></div>
+                                </div>
+                            </div>
+                            <!-- Overlay Text -->
+                            <div class="absolute top-4 left-0 right-0 text-center">
+                                <p class="text-white text-xs font-medium bg-black/40 inline-block px-3 py-1 rounded-full backdrop-blur-sm">
+                                    재활용품을 비추면 자동으로 분석합니다.
+                                </p>
+                            </div>
+                            <!-- AI Status Card -->
+                            <div class="absolute bottom-4 left-4 right-4">
+                                <div class="bg-white/90 backdrop-blur-md rounded-lg p-3 border border-primary/20 shadow-lg">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                                        <p class="text-[11px] font-bold text-primary">
+                                            [분류: 페트병, 신뢰도: 95%, 상태: 깨끗함]
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="w-full bg-primary text-white py-4 rounded-custom font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/10 active:scale-[0.98] transition-transform" data-purpose="verify-button" onclick="alert('+50P 적립 완료!')">
+                        <span class="material-symbols-outlined text-xl">photo_camera</span>
+                        <span>최종 인증 및 적립</span>
+                    </button>
+                </section>
+                <!-- END: AI Scanner Section -->
+                <!-- BEGIN: QuickActions -->
+                <section class="grid grid-cols-2 gap-4" data-purpose="menu-grid">
+                    <div class="bg-white p-4 rounded-custom border border-gray-100 flex flex-col items-center justify-center text-center space-y-3 active:scale-95 transition-transform">
+                        <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                            <svg class="h-6 w-6 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-bold text-gray-700">재활용 상점</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-custom border border-gray-100 flex flex-col items-center justify-center text-center space-y-3 active:scale-95 transition-transform">
+                        <div class="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center">
+                            <svg class="h-6 w-6 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                                <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-bold text-gray-700">배출 지점</span>
+                    </div>
+                </section>
+                <!-- END: QuickActions -->
+                <!-- BEGIN: RecentActivity -->
+                <section class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800">최근 활동</h3>
+                        <button class="text-xs text-primary font-bold">전체 보기</button>
+                    </div>
+                    <div class="bg-white rounded-custom border border-gray-100 overflow-hidden" data-purpose="activity-list">
+                        <div class="p-4 flex items-center gap-4 border-b border-gray-50">
+                            <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-gray-800">PET병 수거</p>
+                                <p class="text-xs text-gray-400">오늘, 2:30 PM</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold text-primary">+450 P</p>
+                            </div>
+                        </div>
+                        <div class="p-4 flex items-center gap-4 border-b border-gray-50">
+                            <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-gray-800">알루미늄 캔</p>
+                                <p class="text-xs text-gray-400">어제, 11:15 AM</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold text-primary">+210 P</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- END: RecentActivity -->
+            </main>
+            <!-- BEGIN: BottomNavigation -->
+            <nav class="fixed bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-100 safe-area-bottom z-50" style="max-width: 480px; width: 100%; margin: 0 auto; left: 0; right: 0;" data-purpose="main-bottom-nav">
+                <div class="flex justify-between items-center px-6 py-3">
+                    <button class="flex flex-col items-center gap-1 text-primary" data-purpose="nav-home">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        <span class="text-[10px] font-bold">홈</span>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-gray-400" data-purpose="nav-history">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                        </svg>
+                        <span class="text-[10px] font-medium">기록</span>
+                    </button>
+                    <div class="-mt-8 relative">
+                        <button class="bg-primary text-white w-14 h-14 rounded-full shadow-lg shadow-green-500/40 flex items-center justify-center active:scale-90 transition-transform" data-purpose="nav-scan">
+                            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <button class="flex flex-col items-center gap-1 text-gray-400" data-purpose="nav-shop">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                        </svg>
+                        <span class="text-[10px] font-medium">상점</span>
+                    </button>
+                    <button class="flex flex-col items-center gap-1 text-gray-400" data-purpose="nav-profile">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                        </svg>
+                        <span class="text-[10px] font-medium">프로필</span>
+                    </button>
+                </div>
+            </nav>
+            <!-- END: BottomNavigation -->
+            </div>
+            <script>
+                // 웹캠 스트림 연결
+                window.addEventListener('DOMContentLoaded', () => {
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                        .then(stream => {
+                            const videoElement = document.getElementById('webcam');
+                            if (videoElement) {
+                                videoElement.srcObject = stream;
+                            }
+                        })
+                        .catch(err => {
+                            console.error('웹캠 접근 오류:', err);
+                        });
+                });
+            </script>
+        </body></html>
