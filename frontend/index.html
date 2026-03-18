@@ -234,19 +234,103 @@
             </nav>
             <!-- END: BottomNavigation -->
             </div>
+            <!-- Hidden Canvas for capturing frames -->
+            <canvas id="capture-canvas" style="display: none;"></canvas>
+
             <script>
+                const video = document.getElementById('webcam');
+                const canvas = document.getElementById('capture-canvas');
+                const statusText = document.querySelector('p.text-primary'); // AI Status Card text
+                const statusDot = document.querySelector('.animate-pulse');
+                
+                let isProcessing = false;
+
                 // 웹캠 스트림 연결
                 window.addEventListener('DOMContentLoaded', () => {
                     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                         .then(stream => {
-                            const videoElement = document.getElementById('webcam');
-                            if (videoElement) {
-                                videoElement.srcObject = stream;
+                            if (video) {
+                                video.srcObject = stream;
+                                // 스트림이 시작되면 분석 루프 실행
+                                video.onloadedmetadata = () => {
+                                    setInterval(captureAndAnalyze, 1000); // 1 FPS
+                                };
                             }
                         })
                         .catch(err => {
                             console.error('웹캠 접근 오류:', err);
+                            if (statusText) statusText.innerText = "카메라를 찾을 수 없습니다.";
                         });
                 });
+
+                async function captureAndAnalyze() {
+                    if (isProcessing || !video.srcObject) return;
+                    
+                    isProcessing = true;
+                    
+                    // 1. 프레임 캡처
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // 2. Blob으로 변환
+                    canvas.toBlob(async (blob) => {
+                        if (!blob) {
+                            isProcessing = false;
+                            return;
+                        }
+
+                        const formData = new FormData();
+                        formData.append('file', blob, 'frame.jpg');
+
+                        try {
+                            // 3. 백엔드 API 호출
+                            const response = await fetch('http://localhost:8000/api/v1/analyze', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            
+                            const result = await response.json();
+                            updateUI(result.data);
+                        } catch (error) {
+                            console.error('분석 중 오류:', error);
+                        } finally {
+                            isProcessing = false;
+                        }
+                    }, 'image/jpeg', 0.8);
+                }
+
+                function updateUI(data) {
+                    if (!statusText || !data) return;
+
+                    if (!data.detected || data.predictions.length === 0) {
+                        statusText.innerText = "분류 대상을 비춰주세요...";
+                        statusDot.classList.replace('bg-primary', 'bg-gray-400');
+                        return;
+                    }
+
+                    // 첫 번째 탐지 객체 기준 업데이트
+                    const pred = data.predictions[0];
+                    const mat = pred.label;
+                    const matKo = pred.korean_label;
+                    const conf = (pred.confidence * 100).toFixed(1);
+                    const status = pred.contamination_status === 'clean' ? '깨끗함' : '오염됨';
+                    
+                    statusText.innerText = `[분류: ${matKo}, 신뢰도: ${conf}%, 상태: ${status}]`;
+                    
+                    // 재활용 가능 여부에 따른 색상 변화
+                    if (pred.is_recyclable) {
+                        statusText.classList.replace('text-red-500', 'text-primary');
+                        statusDot.classList.replace('bg-red-500', 'bg-primary');
+                        statusDot.classList.replace('bg-gray-400', 'bg-primary');
+                    } else {
+                        statusText.classList.replace('text-primary', 'text-red-500');
+                        statusDot.classList.replace('bg-primary', 'bg-red-500');
+                        statusDot.classList.replace('bg-gray-400', 'bg-red-500');
+                    }
+                }
             </script>
         </body></html>
