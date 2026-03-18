@@ -1,0 +1,44 @@
+# Walkthrough - PRD Creation
+
+I have created a comprehensive Product Requirements Document (PRD) for the "Return To Me" project.
+
+## Changes Made
+
+### Documentation
+
+- [NEW] [PRD.md](file:///d:/Intel_AI_App_Creator_Hands_on/recycle_classifier/INTEL-First_TEAM_mini_PROJECT/docs/PRD.md): A detailed PRD covering product overview, goals, features, technical architecture, and roadmap.
+- [NEW] [TRD.md](file:///d:/Intel_AI_App_Creator_Hands_on/recycle_classifier/INTEL-First_TEAM_mini_PROJECT/docs/TRD.md): A technical requirements document specifying the 2-stage inference pipeline, model details (YOLOv8-Nano + MobileNetV3 Small), and performance goals.
+- [NEW] [FE_BE_연동스펙.md](file:///d:/Intel_AI_App_Creator_on/recycle_classifier/INTEL-First_TEAM_mini_PROJECT/docs/FE_BE_연동스펙.md): A specification document detailing API endpoints, request/response formats, and flow control for Front-end and Back-end integration.
+
+## Key Highlights
+
+### PRD.md / TRD.md / API Spec Update
+1.  **영상 전송 로직 추가**: 카메라 입력을 1초에 1프레임씩 전송하고, 분석 완료 전까지 추가 전송을 중단하는 로직을 문서화했습니다.
+2.  **FE-BE 연동 규격서 작성**: [FE_BE_연동스펙.md](file:///d:/Intel_AI_App_Creator_Hands_on/recycle_classifier/INTEL-First_TEAM_mini_PROJECT/docs/FE_BE_연동스펙.md)를 생성하여 API 엔드포인트, 요청/응답 포맷 및 흐름 제어 방식을 정의했습니다.
+
+### PRD.md
+1.  **Product Overview**: Defined the mission of "Return To Me" as a real-time recycling aid.
+2.  **Functional Requirements**: Detailed core features like real-time classification, contamination detection, and UI feedback.
+3.  **Roadmap**: Outlined the progression from PoC to a full-scale mobile application.
+
+### TRD.md
+1.  **Inference Pipeline**: Detailed the "Detect -> Crop -> Classify" 2-stage logic.
+2.  **Model Specs**: Specified YOLOv8-Nano for detection and MobileNetV3 Small for classification.
+3.  **Performance Goals**: Set targets for latency (<100ms) and frame rate (1 FPS with wait mechanism).
+
+### Environment Setup
+1.  **Python 3.11.9 Installation**: Installed the required Python version using `winget`.
+2.  **Virtual Environment**: Deleted the old `.venv` and created a new one specifically with Python 3.11.9.
+3.  **Dependency Installation**: Reinstalled all packages from [requirements.txt](file:///d:/Intel_AI_App_Creator_Hands_on/recycle_classifier/INTEL-First_TEAM_mini_PROJECT/requirements.txt) into the new environment, including `torch`, `ultralytics`, `timm`, and `streamlit`.
+
+### Frontend Integration
+1.  **Frame Capture**: [frontend/index.html](file:///d:/Intel_AI_App_Creator_Hands_on/recycle_classifier/INTEL-First_TEAM_mini_PROJECT/frontend/index.html)에 히든 캔버스를 추가하여 웹캠 영상을 1 FPS 속도로 캡처하는 로직을 구현했습니다.
+2.  **API 연동**: `fetch` API를 사용하여 캡처된 프레임을 백엔드의 `/api/v1/analyze` 엔드포인트로 전송하도록 설정했습니다.
+3.  **Real-time UI Update**: 백엔드에서 받은 분석 결과를 바탕으로 AI 상태 카드(재질, 신뢰도, 오염도)를 실시간으로 업데이트하며, 결과에 따라 표시등(녹색/적색)이 변경되도록 처리했습니다.
+
+## Verification Results
+
+- [PRD.md](file:///d:/Intel_AI_App_Creator_Hands_on/recycle_classifier/INTEL-First_TEAM_mini_PROJECT/docs/PRD.md)와 [TRD.md](file:///d:/Intel_AI_App_Creator_Hands_on/recycle_classifier/INTEL-First_TEAM_mini_PROJECT/docs/TRD.md)가 성공적으로 생성되었습니다.
+- Python 3.11.9 가상환경 및 `uvicorn`, `fastapi`, `ultralytics` 등 모든 의존성 패키지 설치를 완료했습니다.
+- 백엔드 추론 파이프라인(YOLOv8 + MobileNetV3)의 정상 동작을 확인했습니다.
+- 프론트엔드와 백엔드 간의 실시간 연동 및 UI 업데이트 흐름을 검증했습니다.
