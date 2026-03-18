@@ -20,10 +20,9 @@
 - 재활용 정거장 및 무인 수거 기기를 운영하는 지자체/업체
 
 ## 4. 핵심 기능 (Key Features)
-### F1: 실시간 객체 인식 및 분류
-- 웹캠/모바일 카메라를 통한 실시간 프레임 스트리밍 및 분석.
-- **분류 클래스**: 플라스틱, 캔, 종이, 유리, 일반쓰레기 등.
-- **모체 모델**: MobileNetV3 Small 또는 EfficientNet-B0 (경량 모델 활용).
+### F1: 2단계 실시간 추론 파이프라인 (Detection & Classification)
+- 1단계 (Detection): YOLOv8-Nano 모델을 활용해 화면 내 쓰레기 객체의 위치를 실시간으로 탐지하고 바운딩 박스(Bounding Box) 추출
+- 2단계 (Classification): 추출된 영역(Cropped Tensor)을 MobileNetV3 Small 모델로 전달하여 재질(플라스틱, 캔, 종이 등) 및 오염도에 따른 재활용 가능 여부를 최종 판별
 
 ### F2: 재활용 가능 여부 판별 (오염도 체크)
 - 객체의 상태(깨끗함 vs 오염됨)를 이진 분류(Binary Classification)로 판별.
@@ -35,6 +34,10 @@
 
 ### F4: 신뢰도(Confidence) 표시
 - 모델의 예측 결과와 함께 신뢰도 점수를 표시하여 오분류 가능성 안내.
+
+### F5: 재활용 샵 연동 (Recycle Shop Integration)
+- 사용자가 올바르게 분리수거한 물품을 재활용 샵에 가져가면 포인트 적립.
+- 앱 내에서 적립된 포인트 확인 및 사용 가능.
 
 ## 5. 기술 아키텍처 (Technical Architecture)
 ### 5-1. 시스템 흐름도 (Sequence Diagram)
@@ -53,6 +56,7 @@
 - **영상 처리**: OpenCV
 - **UI 프레임워크**: Streamlit / Gradio (PoC용)
 - **최적화**: ONNX / TFLite (향후 모바일 이식용)
+- **프론트엔드**: Stitch 
 
 ## 6. 개발 로드맵 (Roadmap)
 - **1단계 (PoC)**: 노트북 웹캠 기반 종이/플라스틱/캔 분류 데모 완성. (현재 단계)
