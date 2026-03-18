@@ -99,6 +99,8 @@
                         <div class="relative aspect-[4/3] bg-black overflow-hidden" data-purpose="camera-view">
                             <!-- Webcam Video Stream -->
                             <video id="webcam" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
+                            <!-- Webcam Overlay Canvas -->
+                            <canvas id="overlay" class="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"></canvas>
                             <!-- Simulated Camera Feed / Dark Green Overlay -->
                             <div class="absolute inset-0 scanner-overlay"></div>
                             <!-- Scanning Frame -->
@@ -240,10 +242,12 @@
             <script>
                 const video = document.getElementById('webcam');
                 const canvas = document.getElementById('capture-canvas');
+                const overlayCanvas = document.getElementById('overlay');
                 const statusText = document.querySelector('p.text-primary'); // AI Status Card text
                 const statusDot = document.querySelector('.animate-pulse');
                 
                 let isProcessing = false;
+                let currentBoxes = [];
 
                 // 웹캠 스트림 연결
                 window.addEventListener('DOMContentLoaded', () => {
@@ -254,6 +258,7 @@
                                 // 스트림이 시작되면 분석 루프 실행
                                 video.onloadedmetadata = () => {
                                     setInterval(captureAndAnalyze, 1000); // 1 FPS
+                                    requestAnimationFrame(drawBoxes);
                                 };
                             }
                         })
@@ -309,8 +314,18 @@
                     if (!data.detected || data.predictions.length === 0) {
                         statusText.innerText = "분류 대상을 비춰주세요...";
                         statusDot.classList.replace('bg-primary', 'bg-gray-400');
+                        currentBoxes = [];
                         return;
                     }
+
+                    // Bounding Box 업데이트
+                    currentBoxes = data.predictions.map(p => ({
+                        x1: p.bbox.x1,
+                        y1: p.bbox.y1,
+                        x2: p.bbox.x2,
+                        y2: p.bbox.y2,
+                        label: `[${p.korean_label}: ${(p.confidence * 100).toFixed(1)}%]`
+                    }));
 
                     // 첫 번째 탐지 객체 기준 업데이트
                     const pred = data.predictions[0];
@@ -331,6 +346,44 @@
                         statusDot.classList.replace('bg-primary', 'bg-red-500');
                         statusDot.classList.replace('bg-gray-400', 'bg-red-500');
                     }
+                }
+
+                function drawBoxes() {
+                    if (!overlayCanvas || !video.videoWidth) {
+                        requestAnimationFrame(drawBoxes);
+                        return;
+                    }
+
+                    if (overlayCanvas.width !== video.videoWidth || overlayCanvas.height !== video.videoHeight) {
+                        overlayCanvas.width = video.videoWidth;
+                        overlayCanvas.height = video.videoHeight;
+                    }
+
+                    const ctx = overlayCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+                    currentBoxes.forEach(box => {
+                        const width = box.x2 - box.x1;
+                        const height = box.y2 - box.y1;
+
+                        // 빨간색 테두리
+                        ctx.strokeStyle = '#ef4444'; // Tailwind text-red-500
+                        ctx.lineWidth = 4;
+                        ctx.strokeRect(box.x1, box.y1, width, height);
+
+                        // 텍스트 라벨 (텍스트 너비 및 높이에 맞춰 배경 크기 지정)
+                        ctx.font = 'bold 16px sans-serif';
+                        const textWidth = ctx.measureText(box.label).width;
+                        const bgWidth = Math.max(width, textWidth + 10);
+                        
+                        ctx.fillStyle = '#ef4444';
+                        ctx.fillRect(box.x1, box.y1 - 34, bgWidth, 34);
+
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(box.label, box.x1 + 5, box.y1 - 10);
+                    });
+
+                    requestAnimationFrame(drawBoxes);
                 }
             </script>
         </body></html>
