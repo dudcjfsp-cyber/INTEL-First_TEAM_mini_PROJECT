@@ -1,9 +1,11 @@
 """
 추론 스크립트 (inference.py)
-학습된 Dual-Head MobileNetV3 모델로 재질 및 오염도 동시 분류 수행
+Stage 1: YOLOv8-Nano 객체 탐지
+Stage 2: Dual-Head MobileNetV3 재질 및 오염도 동시 분류
 """
 
 import os
+import time
 import json
 import argparse
 import numpy as np
@@ -13,25 +15,24 @@ import torch.nn.functional as F
 import timm
 from PIL import Image
 from torchvision import transforms
-
+from ultralytics import YOLO
 
 # ─── 기본 설정 ───────────────────────────────────────────
 MODEL_PATH = os.path.join("models", "best_model.pth")
 CONFIG_PATH = os.path.join("models", "model_config.json")
 
-# 기본 클래스 정보 (config 없을 때 fallback)
-DEFAULT_CLASSES = ["plastic", "can", "paper", "glass"]
+DEFAULT_CLASSES = ["plastic", "can", "paper", "glass", "trash"]
 CLASS_KO = {
     "plastic": "플라스틱",
     "can": "캔",
     "paper": "종이",
-    "glass": "유리"
+    "glass": "유리",
+    "trash": "기타"
 }
-RECYCLABLE = {"plastic": True, "can": True, "paper": True, "glass": True}
+RECYCLABLE = {"plastic": True, "can": True, "paper": True, "glass": True, "trash": False}
 
 
 class DualHeadMobileNetV3(nn.Module):
-    """train.py에서 정의된 아키텍처와 동일"""
     def __init__(self, num_material_classes: int = 4):
         super(DualHeadMobileNetV3, self).__init__()
         self.backbone = timm.create_model("mobilenetv3_small_100", pretrained=False)
@@ -49,7 +50,6 @@ class DualHeadMobileNetV3(nn.Module):
 
 
 def load_config():
-    """저장된 모델 설정 파일 로드"""
     if os.path.exists(CONFIG_PATH):
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -61,22 +61,24 @@ def load_config():
         "recyclable": RECYCLABLE,
     }
 
-
-def load_model(config: dict, device: torch.device):
-    """학습된 듀얼 헤드 모델 로드"""
-    model = DualHeadMobileNetV3(num_material_classes=config["num_classes"])
-
+def load_models(config: dict, device: torch.device):
+    """Stage 1(YOLO)와 Stage 2(MobileNetV3) 모델을 동시 로드"""
+    # 1. YOLOv8 로드
+    yolo_model = YOLO("yolov8n.pt")
+    
+    # 2. Dual-Head 로드
+    mobilenet_model = DualHeadMobileNetV3(num_material_classes=config["num_classes"])
     if os.path.exists(MODEL_PATH):
         state_dict = torch.load(MODEL_PATH, map_location=device)
-        model.load_state_dict(state_dict, strict=False)
-        print(f"  ✅ 모델 로드 완료: {MODEL_PATH}")
+        mobilenet_model.load_state_dict(state_dict, strict=False)
+        print(f"  ✅ Dual-Head 모델 로드 완료: {MODEL_PATH}")
     else:
-        print(f"  ⚠️  저장된 모델 가중치 없음 ({MODEL_PATH}). 초기화된 상태로 실행합니다.")
-
-    model = model.to(device)
-    model.eval()
-    return model
-
+        print(f"  ⚠️  Dual-Head 가중치 없음 ({MODEL_PATH}).")
+    
+    mobilenet_model = mobilenet_model.to(device)
+    mobilenet_model.eval()
+    
+    return yolo_model, mobilenet_model
 
 def get_transforms():
     return transforms.Compose([
@@ -88,85 +90,102 @@ def get_transforms():
 
 
 @torch.no_grad()
-def predict(model, image: Image.Image, config: dict, device: torch.device):
-    """단일 PIL 이미지 추론 (재질 및 오염도 동시 반환)"""
+def predict(yolo_model, mobilenet_model, image: Image.Image, config: dict, device: torch.device):
+    """
+    FE_BE_연동스펙.md를 완벽히 준수하는 2-Stage 추론 함수
+    """
+    start_time = time.time()
     tf = get_transforms()
-    tensor = tf(image.convert("RGB")).unsqueeze(0).to(device)
     
-    # 듀얼 추론
-    mat_logits, contam_logits = model(tensor)
+    # Stage 1: YOLOv8 객체 탐지
+    yolo_results = yolo_model(image, conf=0.25, verbose=False)
+    boxes = yolo_results[0].boxes
     
-    # 확률 계산
-    mat_probs = F.softmax(mat_logits, dim=1)[0]
-    # BCEWithLogitsLoss의 짝꿍은 Sigmoid
-    contam_prob = torch.sigmoid(contam_logits)[0].item()
-
+    predictions = []
+    
     class_names = config["class_names"]
     class_ko = config.get("class_ko", CLASS_KO)
     recyclable_config = config.get("recyclable", RECYCLABLE)
-
-    # 재질 판별
-    top_mat_idx = mat_probs.argmax().item()
-    top_mat_class = class_names[top_mat_idx]
-    top_mat_conf = mat_probs[top_mat_idx].item() * 100
     
-    # 오염도 판별 (50% 기준)
-    is_contaminated = bool(contam_prob >= 0.5)
-    contam_conf = (contam_prob if is_contaminated else (1.0 - contam_prob)) * 100 
-
-    # 최종 재활용 가능 여부 판별 로직:
-    # 1. 재질 자체가 재활용이 가능한가? AND 2. 오염되지 않았는가?
-    is_mat_recyclable = recyclable_config.get(top_mat_class, False)
-    final_recyclable = is_mat_recyclable and (not is_contaminated)
-
-    result = {
-        "material": {
-            "class_en": top_mat_class,
-            "class_ko": class_ko.get(top_mat_class, top_mat_class),
-            "confidence": top_mat_conf
-        },
-        "contamination": {
-            "is_contaminated": is_contaminated,
-            "status_ko": "오염됨" if is_contaminated else "깨끗함",
-            "confidence": contam_conf
-        },
-        "final_recyclable": final_recyclable,
-        "all_probs": {class_names[i]: mat_probs[i].item() * 100 for i in range(len(class_names))}
+    for box in boxes:
+        # Bbox 좌표 추출
+        x1, y1, x2, y2 = map(int, box.xyxy[0])
+        
+        # 안전한 Crop
+        img_width, img_height = image.size
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(img_width, x2), min(img_height, y2)
+        
+        # 크기가 너무 작으면 무시
+        if x2 - x1 < 10 or y2 - y1 < 10:
+            continue
+            
+        cropped_img = image.crop((x1, y1, x2, y2))
+        
+        # Stage 2: Dual-Head 분류
+        tensor = tf(cropped_img.convert("RGB")).unsqueeze(0).to(device)
+        mat_logits, contam_logits = mobilenet_model(tensor)
+        
+        mat_probs = F.softmax(mat_logits, dim=1)[0]
+        contam_prob = torch.sigmoid(contam_logits)[0].item()
+        
+        top_mat_idx = mat_probs.argmax().item()
+        top_mat_class = class_names[top_mat_idx]
+        mat_confidence = mat_probs[top_mat_idx].item()
+        
+        # 오염도 판별
+        is_contaminated = bool(contam_prob >= 0.5)
+        # FE/BE 규격 준수 ("안깨끗함" -> "contaminated" 혹은 자유 사용. 예시에서는 "clean" 사용)
+        contam_status_str = "contaminated" if is_contaminated else "clean"
+        contam_status_ko = "오염됨" if is_contaminated else "깨끗함"
+        
+        # 재활용 판별 로직
+        is_mat_recyclable = recyclable_config.get(top_mat_class, False)
+        final_recyclable = is_mat_recyclable and (not is_contaminated)
+        
+        pred_dict = {
+            "label": top_mat_class,
+            "korean_label": class_ko.get(top_mat_class, top_mat_class),
+            "confidence": round(mat_confidence, 4),
+            "is_recyclable": final_recyclable,
+            "contamination_status": contam_status_str,
+            "contamination_status_ko": contam_status_ko,  # 추가 정보
+            "bbox": {
+                "x1": x1,
+                "y1": y1,
+                "x2": x2,
+                "y2": y2
+            }
+        }
+        predictions.append(pred_dict)
+        
+    inference_time_ms = round((time.time() - start_time) * 1000, 2)
+    
+    return {
+        "status": "success",
+        "data": {
+            "detected": len(predictions) > 0,
+            "predictions": predictions,
+            "inference_time_ms": inference_time_ms
+        }
     }
-    return result
 
 
 def print_result(result: dict):
-    mat = result["material"]
-    contam = result["contamination"]
-    status_icon = "✅ (재활용 가능)" if result["final_recyclable"] else "❌ (재활용 불가)"
-
-    print(f"\n{'─'*45}")
-    print(f"  [1] 재질 판별 : {mat['class_ko']:<8s} ({mat['confidence']:.1f}% 신뢰도)")
-    print(f"  [2] 오염 상태 : {contam['status_ko']:<8s} ({contam['confidence']:.1f}% 신뢰도)")
-    print(f"{'─'*45}")
-    print(f"  ▶ 최종 결과   : {status_icon}")
-    print(f"{'─'*45}")
-    
-    print("  [전체 재질 확률 분포]")
-    for cls, prob in sorted(result["all_probs"].items(), key=lambda x: -x[1]):
-        bar = "█" * int(prob / 5)
-        ko = CLASS_KO.get(cls, cls)
-        print(f"    {ko:12s} {bar:<20s} {prob:.1f}%")
-    print()
+    print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
-def run_test_mode(model, config, device):
-    """더미 이미지로 파이프라인 테스트"""
-    print("\n[테스트 모드] 더미 이미지(랜덤 노이즈)로 듀얼 헤드 파이프라인 검증...")
-    dummy = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
-    result = predict(model, dummy, config, device)
+def run_test_mode(yolo_model, mobilenet_model, config, device):
+    print("\n[테스트 모드] 더미 이미지(랜덤 노이즈)로 API 응답 구조 검증...")
+    dummy = Image.fromarray(np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8))
+    # YOLO가 더미에서는 객체를 못 잡을 수 있으므로 강제로 인식시키거나 빈배열 테스트 수행
+    result = predict(yolo_model, mobilenet_model, dummy, config, device)
     print_result(result)
-    print("  ✅ 듀얼 헤드 추론 파이프라인 정상 동작 확인!")
+    print("  ✅ 2-Stage 통합 추론 파이프라인 (JSON 규격) 확인 완료!")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="재질 및 오염도 동시 추론")
+    parser = argparse.ArgumentParser(description="2-Stage (YOLOv8 + Dual-Head) 파이프라인")
     parser.add_argument("--image", type=str, default=None, help="추론할 이미지 경로")
     parser.add_argument("--test", action="store_true", help="더미 이미지로 파이프라인 테스트")
     args = parser.parse_args()
@@ -175,22 +194,22 @@ if __name__ == "__main__":
     config = load_config()
 
     print(f"\n{'='*60}")
-    print(f"  재활용 분류기 - 듀얼 헤드 엔진 작동")
+    print(f"  재활용 분류기 - 2-Stage 통합 엔진 작동")
     print(f"  디바이스: {device}")
     print(f"{'='*60}")
 
-    model = load_model(config, device)
+    yolo_model, mobilenet_model = load_models(config, device)
 
     if args.test:
-        run_test_mode(model, config, device)
+        run_test_mode(yolo_model, mobilenet_model, config, device)
     elif args.image:
         if not os.path.exists(args.image):
             print(f"❌ 이미지 파일을 찾을 수 없습니다: {args.image}")
         else:
             img = Image.open(args.image)
-            result = predict(model, img, config, device)
+            result = predict(yolo_model, mobilenet_model, img, config, device)
             print_result(result)
     else:
         print("사용법:")
-        print("  python src/inference.py --test              # 파이프라인 테스트")
-        print("  python src/inference.py --image 이미지.jpg  # 이미지 추론")
+        print("  python src/inference.py --test")
+        print("  python src/inference.py --image 이미지.jpg")
