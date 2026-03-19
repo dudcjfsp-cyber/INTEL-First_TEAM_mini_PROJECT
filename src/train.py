@@ -40,7 +40,7 @@ RECYCLABLE = {
 
 class DualHeadMobileNetV3(nn.Module):
     """MobileNetV3 Small을 백본으로 하는 듀얼 헤드 아키텍처"""
-    def __init__(self, num_material_classes: int = 4, pretrained: bool = True, freeze_backbone: bool = True):
+    def __init__(self, num_material_classes: int = 5, pretrained: bool = True, freeze_backbone: bool = True):
         super(DualHeadMobileNetV3, self).__init__()
         
         # PRD/TRD에 명시된 MobileNetV3 Small 로드

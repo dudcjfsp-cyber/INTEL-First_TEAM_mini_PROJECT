@@ -33,7 +33,7 @@ RECYCLABLE = {"plastic": True, "can": True, "paper": True, "glass": True, "trash
 
 
 class DualHeadMobileNetV3(nn.Module):
-    def __init__(self, num_material_classes: int = 4):
+    def __init__(self, num_material_classes: int = 5):
         super(DualHeadMobileNetV3, self).__init__()
         self.backbone = timm.create_model("mobilenetv3_small_100", pretrained=False)
         in_features = self.backbone.classifier.in_features
@@ -69,8 +69,8 @@ def load_models(config: dict, device: torch.device):
     # 2. Dual-Head 로드
     mobilenet_model = DualHeadMobileNetV3(num_material_classes=config["num_classes"])
     if os.path.exists(MODEL_PATH):
-        state_dict = torch.load(MODEL_PATH, map_location=device)
-        mobilenet_model.load_state_dict(state_dict, strict=False)
+        state_dict = torch.load(MODEL_PATH, map_location=device, weights_only=True)
+        mobilenet_model.load_state_dict(state_dict)
         print(f"  ✅ Dual-Head 모델 로드 완료: {MODEL_PATH}")
     else:
         print(f"  ⚠️  Dual-Head 가중치 없음 ({MODEL_PATH}).")
@@ -108,6 +108,9 @@ def predict(yolo_model, mobilenet_model, image: Image.Image, config: dict, devic
     recyclable_config = config.get("recyclable", RECYCLABLE)
     
     for box in boxes:
+        # person(클래스 0) 필터링 - 사람은 재활용 분류 대상이 아님
+        if int(box.cls[0]) == 0:
+            continue
         # Bbox 좌표 추출
         x1, y1, x2, y2 = map(int, box.xyxy[0])
         
